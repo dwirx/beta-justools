@@ -11,7 +11,7 @@ interface AppCardProps {
 
 const AppCard = ({ app, index }: AppCardProps) => {
   const getAppUrl = () => {
-    return `/myapps/${app.path}`;
+    return `/justhtml/${app.path}`;
   };
 
   const handleUse = () => {
