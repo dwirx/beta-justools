@@ -46,9 +46,14 @@ export const Header = ({ showBack, toolName }: HeaderProps) => {
 
       <nav className="flex items-center gap-4">
         {!showBack && (
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Home
-          </Link>
+          <>
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Home
+            </Link>
+            <Link to="/myapps" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              My Apps
+            </Link>
+          </>
         )}
         <a
           href="https://github.com/justhtmls/html-tools"

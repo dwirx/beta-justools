@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Library</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .search {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      background: #2a2a3e;
+      border: 2px solid #3a3a4e;
+      border-radius: 10px;
+      color: #fff;
+      margin-bottom: 20px;
+      outline: none;
+    }
+    .search:focus {
+      border-color: #6366f1;
+    }
+    .prompt-card {
+      background: #2a2a3e;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .prompt-card:hover {
+      background: #3a3a4e;
+      transform: translateY(-2px);
+    }
+    .prompt-title {
+      color: #fff;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    .prompt-text {
+      color: #a5b4fc;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .category {
+      display: inline-block;
+      background: #6366f1;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-top: 10px;
+    }
+    .copied {
+      background: #10b981 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Prompt Library</h1>
+    <input type="text" class="search" placeholder="Search prompts..." id="search">
+    <div id="prompts"></div>
+  </div>
+
+  <script>
+    const prompts = [
+      {
+        title: "Code Review",
+        text: "Please review my code for best practices, performance, and potential bugs. Suggest improvements and explain why.",
+        category: "Development"
+      },
+      {
+        title: "Explain Like I'm 5",
+        text: "Explain [topic] in simple terms that a 5-year-old could understand. Use analogies and examples.",
+        category: "Learning"
+      },
+      {
+        title: "Creative Writing",
+        text: "Write a short story about [topic] in the style of [author]. Make it engaging and include vivid descriptions.",
+        category: "Writing"
+      },
+      {
+        title: "Debug Helper",
+        text: "I'm getting this error: [error message]. Here's my code: [code]. Please help me understand and fix the issue.",
+        category: "Development"
+      },
+      {
+        title: "Email Writer",
+        text: "Write a professional email to [recipient] about [topic]. Keep it concise and maintain a [formal/casual] tone.",
+        category: "Business"
+      }
+    ];
+
+    function renderPrompts(filter = '') {
+      const container = document.getElementById('prompts');
+      const filtered = prompts.filter(p => 
+        p.title.toLowerCase().includes(filter.toLowerCase()) ||
+        p.text.toLowerCase().includes(filter.toLowerCase())
+      );
+      
+      container.innerHTML = filtered.map(p => `
+        <div class="prompt-card" onclick="copyPrompt(this, '${p.text.replace(/'/g, "\\'")}')">
+          <div class="prompt-title">${p.title}</div>
+          <div class="prompt-text">${p.text}</div>
+          <span class="category">${p.category}</span>
+        </div>
+      `).join('');
+    }
+
+    function copyPrompt(element, text) {
+      navigator.clipboard.writeText(text);
+      element.classList.add('copied');
+      setTimeout(() => element.classList.remove('copied'), 1000);
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      renderPrompts(e.target.value);
+    });
+
+    renderPrompts();
+  </script>
+</body>
+</html>
