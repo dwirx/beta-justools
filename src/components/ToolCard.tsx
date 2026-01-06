@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Tool, Category } from '@/data/tools';
+import { ToolMeta, Category } from '@/lib/toolRegistry';
 import { Star, ExternalLink } from 'lucide-react';
 
 interface ToolCardProps {
-  tool: Tool;
+  tool: ToolMeta;
   index: number;
 }
 

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,24 +6,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
-// Tool Pages
-import JsonFormatterPage from "./pages/tools/JsonFormatterPage";
-import Base64EncoderPage from "./pages/tools/Base64EncoderPage";
-import UuidGeneratorPage from "./pages/tools/UuidGeneratorPage";
-import ColorConverterPage from "./pages/tools/ColorConverterPage";
-import PasswordGeneratorPage from "./pages/tools/PasswordGeneratorPage";
-import WordCounterPage from "./pages/tools/WordCounterPage";
-import TextCasePage from "./pages/tools/TextCasePage";
-import HashGeneratorPage from "./pages/tools/HashGeneratorPage";
-import UrlEncoderPage from "./pages/tools/UrlEncoderPage";
-import TimestampConverterPage from "./pages/tools/TimestampConverterPage";
-import LoremGeneratorPage from "./pages/tools/LoremGeneratorPage";
-import NumberBasePage from "./pages/tools/NumberBasePage";
-import PurpleCipherPage from "./pages/tools/PurpleCipherPage";
 import MyAppsPage from "./pages/MyAppsPage";
 
+// Import tool registry for dynamic routing
+import toolRegistry from "./lib/toolRegistry";
+
 const queryClient = new QueryClient();
+
+// Loading component for lazy-loaded tools
+const ToolLoading = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <p className="text-muted-foreground text-sm">Loading tool...</p>
+    </div>
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -30,30 +29,26 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          
-          {/* Tool Routes */}
-          <Route path="/json-formatter" element={<JsonFormatterPage />} />
-          <Route path="/base64-encoder" element={<Base64EncoderPage />} />
-          <Route path="/uuid-generator" element={<UuidGeneratorPage />} />
-          <Route path="/color-converter" element={<ColorConverterPage />} />
-          <Route path="/password-generator" element={<PasswordGeneratorPage />} />
-          <Route path="/text-counter" element={<WordCounterPage />} />
-          <Route path="/text-case" element={<TextCasePage />} />
-          <Route path="/hash-generator" element={<HashGeneratorPage />} />
-          <Route path="/url-encoder" element={<UrlEncoderPage />} />
-          <Route path="/timestamp-converter" element={<TimestampConverterPage />} />
-          <Route path="/lorem-generator" element={<LoremGeneratorPage />} />
-          <Route path="/number-base" element={<NumberBasePage />} />
-          <Route path="/purple-cipher" element={<PurpleCipherPage />} />
-          
-          {/* My Apps */}
-          <Route path="/myapps" element={<MyAppsPage />} />
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<ToolLoading />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            
+            {/* Dynamic Tool Routes - Auto-generated from registry */}
+            {toolRegistry.map((tool) => (
+              <Route 
+                key={tool.id} 
+                path={`/${tool.id}`} 
+                element={<tool.component />} 
+              />
+            ))}
+            
+            {/* My Apps */}
+            <Route path="/myapps" element={<MyAppsPage />} />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

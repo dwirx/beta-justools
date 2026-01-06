@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Tool } from '@/data/tools';
+import { ToolMeta } from '@/lib/toolRegistry';
 import { ToolCard } from './ToolCard';
 
 interface ToolsGridProps {
-  tools: Tool[];
+  tools: ToolMeta[];
 }
 
 export const ToolsGrid = ({ tools }: ToolsGridProps) => {
