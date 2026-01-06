@@ -222,4 +222,33 @@
       linear-gradient(90deg, hsl(222 30% 15% / 0.5) 1px, transparent 1px);
     background-size: 40px 40px;
   }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Touch-friendly tap targets */
+  @media (pointer: coarse) {
+    .tool-card {
+      min-height: 120px;
+    }
+    
+    .filter-button {
+      min-height: 44px;
+    }
+  }
+
+  /* Safe area for notched devices */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
 }
