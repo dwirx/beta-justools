@@ -10,6 +10,7 @@ const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Productivity: <CheckSquare className="w-4 h-4" />,
   Education: <BookOpen className="w-4 h-4" />,
   Entertainment: <Sparkles className="w-4 h-4" />,
+  Other: <FolderOpen className="w-4 h-4" />,
 };
 
 const AppCard = ({ app, index }: { app: AppMeta; index: number }) => (
@@ -139,19 +140,24 @@ const MyAppsPage = () => {
           className="bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 rounded-xl p-4"
         >
           <h3 className="font-semibold text-foreground mb-2">
-            📁 Cara Menambah App Baru
+            🚀 Cara Menambah App Baru (Super Mudah!)
           </h3>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>
-              <strong>1.</strong> Taruh file HTML di{' '}
-              <code className="bg-muted px-1 rounded">public/justhtml/</code>
-            </p>
-            <p>
-              <strong>2.</strong> Tambahkan metadata di{' '}
-              <code className="bg-muted px-1 rounded">src/lib/appRegistry.ts</code>
-            </p>
-            <p className="text-primary/80 mt-2">
-              ✨ App akan langsung muncul di sini!
+          <div className="text-sm text-muted-foreground space-y-2">
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="font-medium text-foreground mb-1">📄 Single File:</p>
+              <code className="text-xs bg-background px-2 py-1 rounded">
+                public/justhtml/helloworld.html
+              </code>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="font-medium text-foreground mb-1">📁 Project Folder:</p>
+              <code className="text-xs bg-background px-2 py-1 rounded">
+                public/justhtml/my-game/index.html
+              </code>
+            </div>
+            <p className="text-primary/80 pt-2 flex items-center gap-2">
+              <span>✨</span>
+              <span>Tambah path di <code className="bg-muted px-1 rounded">detectedFiles</code> → Otomatis muncul!</span>
             </p>
           </div>
         </motion.div>

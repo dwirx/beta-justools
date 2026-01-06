@@ -2,20 +2,22 @@
 // APP REGISTRY - Auto-detection untuk HTML Apps
 // =============================================================
 // 
-// CARA MENAMBAH APP BARU:
+// CARA MENAMBAH APP BARU (TANPA KONFIGURASI!):
 // 
 // 1. SINGLE FILE: Taruh file HTML di public/justhtml/
-//    Contoh: public/justhtml/calculator.html
+//    Contoh: public/justhtml/helloworld.html
+//    -> Otomatis terdeteksi dengan nama "Helloworld"
 //    
 // 2. PROJECT FOLDER: Buat folder dengan index.html
-//    Contoh: public/justhtml/snake/index.html
-//    
-// 3. Tambahkan metadata di bawah ini (WAJIB)
+//    Contoh: public/justhtml/my-game/index.html
+//    -> Otomatis terdeteksi dengan nama "My Game"
+//
+// 3. KUSTOMISASI (Opsional): Tambah metadata di appCustomizations
 //
 // =============================================================
 
 export type AppType = 'single-file' | 'project';
-export type AppCategory = 'Games' | 'Tools' | 'Productivity' | 'Education' | 'Entertainment';
+export type AppCategory = 'Games' | 'Tools' | 'Productivity' | 'Education' | 'Entertainment' | 'Other';
 
 export interface AppMeta {
   id: string;
@@ -29,90 +31,147 @@ export interface AppMeta {
 }
 
 // =============================================================
-// DAFTAR APPS - Tambah entry baru di sini!
+// KUSTOMISASI APPS (Opsional) - Untuk override auto-detection
 // =============================================================
+// Key = nama file tanpa ekstensi atau nama folder
+// Contoh: 'calculator' untuk calculator.html atau folder calculator/
 
-const appRegistry: AppMeta[] = [
+interface AppCustomization {
+  name?: string;
+  description?: string;
+  category?: AppCategory;
+  icon?: string;
+  featured?: boolean;
+}
+
+const appCustomizations: Record<string, AppCustomization> = {
   // ===== GAMES =====
-  {
-    id: 'tictactoe',
+  'tictactoe': {
     name: 'Tic Tac Toe',
     description: 'Classic Tic Tac Toe game for two players',
-    type: 'project',
-    path: 'tictactoe/index.html',
     category: 'Games',
     icon: '⭕',
     featured: true,
   },
-  {
-    id: 'snake',
+  'snake': {
     name: 'Snake Game',
     description: 'Classic Snake game with mobile touch controls',
-    type: 'project',
-    path: 'snake/index.html',
     category: 'Games',
     icon: '🐍',
     featured: true,
   },
-  {
-    id: 'memory-game',
+  'memory-game': {
     name: 'Memory Game',
     description: 'Match pairs of cards to test your memory',
-    type: 'single-file',
-    path: 'memory-game.html',
     category: 'Games',
     icon: '🃏',
   },
 
   // ===== TOOLS =====
-  {
-    id: 'calculator',
+  'calculator': {
     name: 'Calculator',
     description: 'Simple calculator for basic math operations',
-    type: 'single-file',
-    path: 'calculator.html',
     category: 'Tools',
     icon: '🧮',
   },
-  {
-    id: 'stopwatch',
+  'stopwatch': {
     name: 'Stopwatch',
     description: 'Stopwatch with lap timer functionality',
-    type: 'single-file',
-    path: 'stopwatch.html',
     category: 'Tools',
     icon: '⏱️',
   },
-  {
-    id: 'prompt-library',
+  'promptLibrary': {
     name: 'Prompt Library',
     description: 'Collection of useful AI prompts',
-    type: 'single-file',
-    path: 'promptLibrary.html',
     category: 'Tools',
     icon: '💬',
   },
 
   // ===== PRODUCTIVITY =====
-  {
-    id: 'todo',
+  'todo': {
     name: 'Todo List',
     description: 'Simple todo list with localStorage persistence',
-    type: 'single-file',
-    path: 'todo.html',
     category: 'Productivity',
     icon: '✅',
   },
-  {
-    id: 'notes',
+  'notes': {
     name: 'Quick Notes',
     description: 'Take quick notes with color coding',
-    type: 'single-file',
-    path: 'notes.html',
     category: 'Productivity',
     icon: '📝',
   },
+};
+
+// =============================================================
+// AUTO-DETECTION: Daftar file yang ada di public/justhtml/
+// =============================================================
+// Update daftar ini saat menambah file baru
+// Format: { path: string, type: AppType }
+
+const detectedFiles: { path: string; type: AppType }[] = [
+  // Single files
+  { path: 'calculator.html', type: 'single-file' },
+  { path: 'memory-game.html', type: 'single-file' },
+  { path: 'notes.html', type: 'single-file' },
+  { path: 'promptLibrary.html', type: 'single-file' },
+  { path: 'stopwatch.html', type: 'single-file' },
+  { path: 'todo.html', type: 'single-file' },
+  // Project folders
+  { path: 'snake/index.html', type: 'project' },
+  { path: 'tictactoe/index.html', type: 'project' },
 ];
+
+// =============================================================
+// HELPER: Convert filename/folder to readable name
+// =============================================================
+
+const toReadableName = (filename: string): string => {
+  // Remove extension and path
+  const name = filename
+    .replace(/\.html$/, '')
+    .replace(/\/index\.html$/, '')
+    .split('/')
+    .pop() || filename;
+  
+  // Convert camelCase, kebab-case, snake_case to Title Case
+  return name
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase
+    .replace(/[-_]/g, ' ') // kebab-case & snake_case
+    .replace(/\b\w/g, c => c.toUpperCase()) // Title Case
+    .trim();
+};
+
+const getIdFromPath = (path: string): string => {
+  return path
+    .replace(/\.html$/, '')
+    .replace(/\/index\.html$/, '')
+    .split('/')
+    .pop() || path;
+};
+
+// =============================================================
+// BUILD REGISTRY - Auto-generate dari detectedFiles
+// =============================================================
+
+const buildAppRegistry = (): AppMeta[] => {
+  return detectedFiles.map(({ path, type }) => {
+    const id = getIdFromPath(path);
+    const custom = appCustomizations[id] || {};
+    
+    return {
+      id,
+      name: custom.name || toReadableName(path),
+      description: custom.description || `Open ${toReadableName(path)}`,
+      type,
+      path,
+      category: custom.category || 'Other',
+      icon: custom.icon || '📦',
+      featured: custom.featured || false,
+    };
+  });
+};
+
+const appRegistry: AppMeta[] = buildAppRegistry();
 
 // =============================================================
 // HELPER FUNCTIONS
@@ -144,8 +203,22 @@ export const getAppCategories = (): AppCategory[] => [
   'Productivity',
   'Education',
   'Entertainment',
+  'Other',
 ];
 
 export const getAppUrl = (app: AppMeta) => `/justhtml/${app.path}`;
+
+// =============================================================
+// QUICK ADD FUNCTIONS - Untuk menambah file baru dengan cepat
+// =============================================================
+
+/**
+ * Untuk menambah file baru, cukup tambahkan ke detectedFiles:
+ * 
+ * Single file: { path: 'namafile.html', type: 'single-file' }
+ * Project:     { path: 'namafolder/index.html', type: 'project' }
+ * 
+ * Opsional: Tambah kustomisasi di appCustomizations
+ */
 
 export default appRegistry;
