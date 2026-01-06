@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="nav-bar">
+    <a href="/" class="nav-btn">🏠 Home</a>
+    <a href="/myapps" class="nav-btn">← Back</a>
+  </nav>
+
+  <div class="container">
+    <div class="quiz-card">
+      <h1>🧠 Quiz Game</h1>
+      <p class="subtitle">HTML Project with Multiple Files</p>
+
+      <div id="quiz-container">
+        <div id="question-counter" class="question-counter"></div>
+        <div id="question" class="question"></div>
+        <div id="options" class="options"></div>
+        <div id="result" class="result"></div>
+      </div>
+
+      <div id="score-container" class="score-container hidden">
+        <h2>Quiz Complete!</h2>
+        <p id="final-score" class="final-score"></p>
+        <button onclick="restartQuiz()" class="btn btn-primary">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
