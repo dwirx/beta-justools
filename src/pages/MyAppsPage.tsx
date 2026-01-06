@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles, Atom } from 'lucide-react';
 import { motion } from 'framer-motion';
-import appRegistry, { getAppCategories, AppCategory, AppMeta, getAppUrl } from '@/lib/appRegistry';
+import { getAppRegistry, getAppCategories, AppCategory, AppMeta, getAppUrl, loadTsxAppWithMeta } from '@/lib/appRegistry';
 
 const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Games: <Gamepad2 className="w-4 h-4" />,
@@ -13,16 +13,17 @@ const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Other: <FolderOpen className="w-4 h-4" />,
 };
 
-const AppCard = ({ app, index }: { app: AppMeta; index: number }) => (
-  <motion.a
-    href={getAppUrl(app)}
-    target="_blank"
-    rel="noopener noreferrer"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.05 }}
-    className="group bg-card border border-border rounded-xl p-4 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all"
-  >
+const typeIcons: Record<string, React.ReactNode> = {
+  'tsx': <Atom className="w-3 h-3" />,
+  'single-file': <span>📄</span>,
+  'project': <span>📁</span>,
+};
+
+const AppCard = ({ app, index }: { app: AppMeta; index: number }) => {
+  const url = getAppUrl(app);
+  const isTsx = app.type === 'tsx';
+  
+  const CardContent = (
     <div className="flex items-start gap-3">
       <div className="text-3xl">{app.icon || '📦'}</div>
       <div className="flex-1 min-w-0">
@@ -42,22 +43,61 @@ const AppCard = ({ app, index }: { app: AppMeta; index: number }) => (
             {categoryIcons[app.category]}
             {app.category}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {app.type === 'project' ? '📁 Project' : '📄 Single'}
+          <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground flex items-center gap-1">
+            {typeIcons[app.type]}
+            {app.type === 'tsx' ? 'React' : app.type === 'project' ? 'Project' : 'HTML'}
           </span>
         </div>
       </div>
     </div>
-  </motion.a>
-);
+  );
+
+  const className = "group bg-card border border-border rounded-xl p-4 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all block";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+    >
+      {isTsx ? (
+        <Link to={url} className={className}>
+          {CardContent}
+        </Link>
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer" className={className}>
+          {CardContent}
+        </a>
+      )}
+    </motion.div>
+  );
+};
 
 const MyAppsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<'All' | AppCategory>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [apps, setApps] = useState<AppMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadApps = async () => {
+      const registry = getAppRegistry();
+      
+      // Load TSX apps with their metadata
+      const loadedApps = await Promise.all(
+        registry.map(app => loadTsxAppWithMeta(app))
+      );
+      
+      setApps(loadedApps);
+      setLoading(false);
+    };
+    
+    loadApps();
+  }, []);
 
   const categories = getAppCategories();
   
-  const filteredApps = appRegistry.filter((app) => {
+  const filteredApps = apps.filter((app) => {
     const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
     const matchesSearch = 
       app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -82,7 +122,7 @@ const MyAppsPage = () => {
               <h1 className="text-xl font-bold text-foreground">My Apps</h1>
             </div>
             <span className="ml-auto text-sm text-muted-foreground">
-              {appRegistry.length} apps
+              {loading ? '...' : `${apps.length} apps`}
             </span>
           </div>
         </div>
@@ -111,10 +151,10 @@ const MyAppsPage = () => {
                 : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
             }`}
           >
-            All ({appRegistry.length})
+            All ({apps.length})
           </button>
           {categories.map((category) => {
-            const count = appRegistry.filter(a => a.category === category).length;
+            const count = apps.filter(a => a.category === category).length;
             if (count === 0) return null;
             return (
               <button
@@ -137,33 +177,60 @@ const MyAppsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 rounded-xl p-4"
+          className="bg-gradient-to-r from-primary/10 via-violet-500/10 to-fuchsia-500/10 border border-primary/20 rounded-xl p-4"
         >
-          <h3 className="font-semibold text-foreground mb-2">
-            🚀 Cara Menambah App Baru (Super Mudah!)
+          <h3 className="font-semibold text-foreground mb-3">
+            🚀 Auto-Detection! Tambah App Tanpa Konfigurasi
           </h3>
-          <div className="text-sm text-muted-foreground space-y-2">
-            <div className="bg-muted/50 rounded-lg p-3">
-              <p className="font-medium text-foreground mb-1">📄 Single File:</p>
-              <code className="text-xs bg-background px-2 py-1 rounded">
-                public/justhtml/helloworld.html
+          <div className="grid md:grid-cols-2 gap-3 text-sm">
+            <div className="bg-background/50 rounded-lg p-3 border border-border/50">
+              <div className="flex items-center gap-2 font-medium text-foreground mb-2">
+                <Atom className="w-4 h-4 text-cyan-500" />
+                TSX App (React)
+              </div>
+              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                src/apps/NamaApp.tsx
               </code>
+              <p className="text-muted-foreground text-xs mt-2">
+                Export appMeta untuk kustomisasi (opsional)
+              </p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-3">
-              <p className="font-medium text-foreground mb-1">📁 Project Folder:</p>
-              <code className="text-xs bg-background px-2 py-1 rounded">
-                public/justhtml/my-game/index.html
+            <div className="bg-background/50 rounded-lg p-3 border border-border/50">
+              <div className="flex items-center gap-2 font-medium text-foreground mb-2">
+                <span>📄</span>
+                HTML App
+              </div>
+              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                public/justhtml/namaapp.html
               </code>
+              <p className="text-muted-foreground text-xs mt-2">
+                Atau folder dengan index.html
+              </p>
             </div>
-            <p className="text-primary/80 pt-2 flex items-center gap-2">
-              <span>✨</span>
-              <span>Tambah path di <code className="bg-muted px-1 rounded">detectedFiles</code> → Otomatis muncul!</span>
-            </p>
           </div>
+          <p className="text-primary/80 text-sm mt-3 flex items-center gap-2">
+            <span>✨</span>
+            <span>File baru otomatis muncul di sini!</span>
+          </p>
         </motion.div>
 
         {/* Apps Grid */}
-        {filteredApps.length > 0 ? (
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-muted rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredApps.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredApps.map((app, index) => (
               <AppCard key={app.id} app={app} index={index} />
