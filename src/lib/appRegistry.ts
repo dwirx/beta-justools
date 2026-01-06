@@ -4,22 +4,38 @@
 // 
 // 🚀 CARA MENAMBAH APP BARU (ZERO CONFIG!):
 // 
-// TSX APP:
-//   1. Buat file di src/apps/NamaApp.tsx
-//   2. Export default component
-//   3. (Opsional) Export appMeta untuk kustomisasi
-//   4. SELESAI! Otomatis muncul di My Apps
+// ============ TSX APPS ============
+// 
+// SINGLE FILE:
+//   src/apps/HelloWorld.tsx
+//   → Otomatis jadi single TSX app
 //
-// HTML APP:
-//   1. Taruh file di public/justhtml/namaapp.html
-//   2. ATAU buat folder public/justhtml/namaapp/index.html
-//   3. SELESAI! Otomatis muncul di My Apps
+// PROJECT FOLDER:
+//   src/apps/my-game/index.tsx (atau App.tsx)
+//   src/apps/my-game/components/...
+//   → Otomatis jadi TSX project
+//
+// ============ HTML APPS ============
+// 
+// SINGLE FILE:
+//   public/justhtml/calculator.html
+//   → Otomatis jadi single HTML app
+//
+// PROJECT FOLDER:
+//   public/justhtml/snake/index.html
+//   public/justhtml/snake/script.js
+//   → Otomatis jadi HTML project
+//
+// ============ KUSTOMISASI ============
+// 
+// TSX: Export appMeta di file utama
+// HTML: Tambah di htmlCustomizations
 //
 // =============================================================
 
 import { lazy, ComponentType } from 'react';
 
-export type AppType = 'single-file' | 'project' | 'tsx';
+export type AppType = 'html-single' | 'html-project' | 'tsx-single' | 'tsx-project';
 export type AppCategory = 'Games' | 'Tools' | 'Productivity' | 'Education' | 'Entertainment' | 'Other';
 
 export interface AppMeta {
@@ -46,53 +62,125 @@ export interface TsxAppMeta {
 // AUTO-DETECT TSX APPS dari src/apps/
 // =============================================================
 
-const tsxModules = import.meta.glob<{ 
+// Single TSX files: src/apps/HelloWorld.tsx
+const tsxSingleFiles = import.meta.glob<{ 
   default: ComponentType; 
   appMeta?: TsxAppMeta 
 }>('/src/apps/*.tsx');
 
+// Project folders: src/apps/my-game/index.tsx atau App.tsx
+const tsxProjectIndex = import.meta.glob<{ 
+  default: ComponentType; 
+  appMeta?: TsxAppMeta 
+}>('/src/apps/*/index.tsx');
+
+const tsxProjectApp = import.meta.glob<{ 
+  default: ComponentType; 
+  appMeta?: TsxAppMeta 
+}>('/src/apps/*/App.tsx');
+
+// Combine all TSX modules
+export const tsxModules: Record<string, () => Promise<{ default: ComponentType; appMeta?: TsxAppMeta }>> = {
+  ...tsxSingleFiles,
+  ...tsxProjectIndex,
+  ...tsxProjectApp,
+};
+
 const buildTsxApps = (): AppMeta[] => {
-  return Object.entries(tsxModules).map(([path, importFn]) => {
-    // Extract filename: /src/apps/HelloWorld.tsx -> HelloWorld
+  const apps: AppMeta[] = [];
+  const processedFolders = new Set<string>();
+  
+  // Process single files
+  Object.entries(tsxSingleFiles).forEach(([path, importFn]) => {
     const filename = path.split('/').pop()?.replace('.tsx', '') || 'unknown';
-    const id = filename.toLowerCase().replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    const id = toKebabCase(filename);
     
-    return {
+    apps.push({
       id: `tsx-${id}`,
       name: toReadableName(filename),
-      description: `TSX App: ${toReadableName(filename)}`,
-      type: 'tsx' as AppType,
+      description: `Single TSX app`,
+      type: 'tsx-single',
       path: path,
-      category: 'Other' as AppCategory,
+      category: 'Other',
       icon: '⚛️',
       featured: false,
       component: lazy(importFn),
-    };
+    });
   });
+  
+  // Process project folders (index.tsx)
+  Object.entries(tsxProjectIndex).forEach(([path, importFn]) => {
+    const parts = path.split('/');
+    const folderName = parts[parts.length - 2];
+    
+    if (processedFolders.has(folderName)) return;
+    processedFolders.add(folderName);
+    
+    const id = toKebabCase(folderName);
+    
+    apps.push({
+      id: `tsx-${id}`,
+      name: toReadableName(folderName),
+      description: `TSX project with multiple files`,
+      type: 'tsx-project',
+      path: path,
+      category: 'Other',
+      icon: '📦',
+      featured: false,
+      component: lazy(importFn),
+    });
+  });
+  
+  // Process project folders (App.tsx) - only if not already processed
+  Object.entries(tsxProjectApp).forEach(([path, importFn]) => {
+    const parts = path.split('/');
+    const folderName = parts[parts.length - 2];
+    
+    if (processedFolders.has(folderName)) return;
+    processedFolders.add(folderName);
+    
+    const id = toKebabCase(folderName);
+    
+    apps.push({
+      id: `tsx-${id}`,
+      name: toReadableName(folderName),
+      description: `TSX project with multiple files`,
+      type: 'tsx-project',
+      path: path,
+      category: 'Other',
+      icon: '📦',
+      featured: false,
+      component: lazy(importFn),
+    });
+  });
+  
+  return apps;
 };
 
 // =============================================================
 // AUTO-DETECT HTML APPS dari public/justhtml/
 // =============================================================
-// Menggunakan import.meta.glob untuk scan otomatis
 
-const htmlFiles = import.meta.glob('/public/justhtml/*.html', { query: '?url', import: 'default' });
-const htmlProjects = import.meta.glob('/public/justhtml/*/index.html', { query: '?url', import: 'default' });
+// Single HTML files
+const htmlSingleFiles = import.meta.glob('/public/justhtml/*.html', { query: '?url', import: 'default' });
+
+// Project folders with index.html
+const htmlProjectFiles = import.meta.glob('/public/justhtml/*/index.html', { query: '?url', import: 'default' });
 
 const buildHtmlApps = (): AppMeta[] => {
   const apps: AppMeta[] = [];
   
   // Single HTML files
-  Object.keys(htmlFiles).forEach(path => {
+  Object.keys(htmlSingleFiles).forEach(path => {
     const filename = path.split('/').pop()?.replace('.html', '') || 'unknown';
-    const id = filename.toLowerCase();
+    const id = toKebabCase(filename);
     const custom = htmlCustomizations[id] || htmlCustomizations[filename] || {};
     
     apps.push({
       id: `html-${id}`,
       name: custom.name || toReadableName(filename),
-      description: custom.description || `HTML App: ${toReadableName(filename)}`,
-      type: 'single-file',
+      description: custom.description || `Single HTML file`,
+      type: 'html-single',
       path: `${filename}.html`,
       category: custom.category || 'Other',
       icon: custom.icon || '📄',
@@ -101,18 +189,17 @@ const buildHtmlApps = (): AppMeta[] => {
   });
   
   // Project folders with index.html
-  Object.keys(htmlProjects).forEach(path => {
-    // /public/justhtml/snake/index.html -> snake
+  Object.keys(htmlProjectFiles).forEach(path => {
     const parts = path.split('/');
     const folderName = parts[parts.length - 2];
-    const id = folderName.toLowerCase();
+    const id = toKebabCase(folderName);
     const custom = htmlCustomizations[id] || htmlCustomizations[folderName] || {};
     
     apps.push({
       id: `html-${id}`,
       name: custom.name || toReadableName(folderName),
-      description: custom.description || `HTML Project: ${toReadableName(folderName)}`,
-      type: 'project',
+      description: custom.description || `HTML project with multiple files`,
+      type: 'html-project',
       path: `${folderName}/index.html`,
       category: custom.category || 'Other',
       icon: custom.icon || '📁',
@@ -126,7 +213,6 @@ const buildHtmlApps = (): AppMeta[] => {
 // =============================================================
 // KUSTOMISASI HTML APPS (Opsional)
 // =============================================================
-// Untuk override nama, deskripsi, kategori, icon
 
 interface HtmlCustomization {
   name?: string;
@@ -195,15 +281,22 @@ const htmlCustomizations: Record<string, HtmlCustomization> = {
 };
 
 // =============================================================
-// HELPER: Convert filename to readable name
+// HELPER FUNCTIONS
 // =============================================================
 
 const toReadableName = (filename: string): string => {
   return filename
-    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase
-    .replace(/[-_]/g, ' ') // kebab-case & snake_case
-    .replace(/\b\w/g, c => c.toUpperCase()) // Title Case
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
     .trim();
+};
+
+const toKebabCase = (str: string): string => {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[_\s]+/g, '-')
+    .toLowerCase();
 };
 
 // =============================================================
@@ -222,7 +315,6 @@ const buildAppRegistry = (): AppMeta[] => {
   return _appRegistry;
 };
 
-// Lazy initialization
 const getRegistry = () => buildAppRegistry();
 
 // =============================================================
@@ -230,7 +322,7 @@ const getRegistry = () => buildAppRegistry();
 // =============================================================
 
 export const loadTsxAppWithMeta = async (app: AppMeta): Promise<AppMeta> => {
-  if (app.type !== 'tsx') return app;
+  if (!app.type.startsWith('tsx')) return app;
   
   try {
     const importFn = tsxModules[app.path];
@@ -291,13 +383,37 @@ export const getAppCategories = (): AppCategory[] => [
 ];
 
 export const getAppUrl = (app: AppMeta): string => {
-  if (app.type === 'tsx') {
+  if (app.type.startsWith('tsx')) {
     return `/apps/${app.id.replace('tsx-', '')}`;
   }
   return `/justhtml/${app.path}`;
 };
 
-// For dynamic import
-export { tsxModules };
+// Type helpers
+export const isHtmlApp = (app: AppMeta) => app.type.startsWith('html');
+export const isTsxApp = (app: AppMeta) => app.type.startsWith('tsx');
+export const isProjectApp = (app: AppMeta) => app.type.endsWith('-project');
+export const isSingleFileApp = (app: AppMeta) => app.type.endsWith('-single');
+
+// Type labels
+export const getTypeLabel = (type: AppType): string => {
+  switch (type) {
+    case 'html-single': return 'HTML';
+    case 'html-project': return 'HTML Project';
+    case 'tsx-single': return 'React';
+    case 'tsx-project': return 'React Project';
+    default: return 'App';
+  }
+};
+
+export const getTypeIcon = (type: AppType): string => {
+  switch (type) {
+    case 'html-single': return '📄';
+    case 'html-project': return '📁';
+    case 'tsx-single': return '⚛️';
+    case 'tsx-project': return '📦';
+    default: return '📱';
+  }
+};
 
 export default getRegistry();

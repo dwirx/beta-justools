@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles, Atom } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles, Atom, FileCode, Folder } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getAppRegistry, getAppCategories, AppCategory, AppMeta, getAppUrl, loadTsxAppWithMeta } from '@/lib/appRegistry';
+import { getAppRegistry, getAppCategories, AppCategory, AppMeta, getAppUrl, loadTsxAppWithMeta, getTypeLabel, isTsxApp, isProjectApp } from '@/lib/appRegistry';
 
 const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Games: <Gamepad2 className="w-4 h-4" />,
@@ -13,21 +13,36 @@ const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Other: <FolderOpen className="w-4 h-4" />,
 };
 
-const typeIcons: Record<string, React.ReactNode> = {
-  'tsx': <Atom className="w-3 h-3" />,
-  'single-file': <span>📄</span>,
-  'project': <span>📁</span>,
+const TypeBadge = ({ app }: { app: AppMeta }) => {
+  const isProject = isProjectApp(app);
+  const isTsx = isTsxApp(app);
+  
+  return (
+    <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+      isTsx 
+        ? 'bg-cyan-500/10 text-cyan-500 border border-cyan-500/20' 
+        : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+    }`}>
+      {isTsx ? (
+        <Atom className="w-3 h-3" />
+      ) : (
+        <FileCode className="w-3 h-3" />
+      )}
+      {getTypeLabel(app.type)}
+      {isProject && <Folder className="w-3 h-3 ml-0.5" />}
+    </span>
+  );
 };
 
 const AppCard = ({ app, index }: { app: AppMeta; index: number }) => {
   const url = getAppUrl(app);
-  const isTsx = app.type === 'tsx';
+  const isTsx = isTsxApp(app);
   
   const CardContent = (
     <div className="flex items-start gap-3">
       <div className="text-3xl">{app.icon || '📦'}</div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-semibold text-foreground truncate">{app.name}</h3>
           {app.featured && (
             <span className="px-1.5 py-0.5 text-[10px] bg-primary/20 text-primary rounded">
@@ -38,15 +53,12 @@ const AppCard = ({ app, index }: { app: AppMeta; index: number }) => {
         <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
           {app.description}
         </p>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground flex items-center gap-1">
             {categoryIcons[app.category]}
             {app.category}
           </span>
-          <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground flex items-center gap-1">
-            {typeIcons[app.type]}
-            {app.type === 'tsx' ? 'React' : app.type === 'project' ? 'Project' : 'HTML'}
-          </span>
+          <TypeBadge app={app} />
         </div>
       </div>
     </div>
@@ -182,35 +194,62 @@ const MyAppsPage = () => {
           <h3 className="font-semibold text-foreground mb-3">
             🚀 Auto-Detection! Tambah App Tanpa Konfigurasi
           </h3>
-          <div className="grid md:grid-cols-2 gap-3 text-sm">
-            <div className="bg-background/50 rounded-lg p-3 border border-border/50">
-              <div className="flex items-center gap-2 font-medium text-foreground mb-2">
-                <Atom className="w-4 h-4 text-cyan-500" />
-                TSX App (React)
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            {/* TSX Apps */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 font-medium text-cyan-500">
+                <Atom className="w-4 h-4" />
+                React / TSX
               </div>
-              <code className="text-xs bg-muted px-2 py-1 rounded block">
-                src/apps/NamaApp.tsx
-              </code>
-              <p className="text-muted-foreground text-xs mt-2">
-                Export appMeta untuk kustomisasi (opsional)
-              </p>
+              <div className="bg-background/50 rounded-lg p-3 border border-cyan-500/20 space-y-2">
+                <div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <FileCode className="w-3 h-3" /> Single File
+                  </div>
+                  <code className="text-xs bg-muted px-2 py-1 rounded block">
+                    src/apps/HelloWorld.tsx
+                  </code>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Folder className="w-3 h-3" /> Project Folder
+                  </div>
+                  <code className="text-xs bg-muted px-2 py-1 rounded block">
+                    src/apps/my-game/index.tsx
+                  </code>
+                </div>
+              </div>
             </div>
-            <div className="bg-background/50 rounded-lg p-3 border border-border/50">
-              <div className="flex items-center gap-2 font-medium text-foreground mb-2">
-                <span>📄</span>
-                HTML App
+            
+            {/* HTML Apps */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 font-medium text-orange-500">
+                <FileCode className="w-4 h-4" />
+                HTML
               </div>
-              <code className="text-xs bg-muted px-2 py-1 rounded block">
-                public/justhtml/namaapp.html
-              </code>
-              <p className="text-muted-foreground text-xs mt-2">
-                Atau folder dengan index.html
-              </p>
+              <div className="bg-background/50 rounded-lg p-3 border border-orange-500/20 space-y-2">
+                <div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <FileCode className="w-3 h-3" /> Single File
+                  </div>
+                  <code className="text-xs bg-muted px-2 py-1 rounded block">
+                    public/justhtml/app.html
+                  </code>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Folder className="w-3 h-3" /> Project Folder
+                  </div>
+                  <code className="text-xs bg-muted px-2 py-1 rounded block">
+                    public/justhtml/game/index.html
+                  </code>
+                </div>
+              </div>
             </div>
           </div>
-          <p className="text-primary/80 text-sm mt-3 flex items-center gap-2">
+          <p className="text-primary/80 text-sm mt-4 flex items-center gap-2">
             <span>✨</span>
-            <span>File baru otomatis muncul di sini!</span>
+            <span>File baru otomatis terdeteksi dan muncul di sini!</span>
           </p>
         </motion.div>
 
