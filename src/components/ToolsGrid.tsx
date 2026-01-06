@@ -4,10 +4,9 @@ import { ToolCard } from './ToolCard';
 
 interface ToolsGridProps {
   tools: Tool[];
-  onToolClick: (tool: Tool) => void;
 }
 
-export const ToolsGrid = ({ tools, onToolClick }: ToolsGridProps) => {
+export const ToolsGrid = ({ tools }: ToolsGridProps) => {
   return (
     <section className="px-6 pb-16">
       <div className="max-w-6xl mx-auto">
@@ -37,7 +36,6 @@ export const ToolsGrid = ({ tools, onToolClick }: ToolsGridProps) => {
                 key={tool.id}
                 tool={tool}
                 index={index}
-                onClick={() => onToolClick(tool)}
               />
             ))}
           </div>
