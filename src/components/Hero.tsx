@@ -10,7 +10,7 @@ export const Hero = () => {
   ];
 
   return (
-    <section className="relative py-16 px-6 overflow-hidden">
+    <section className="relative py-8 md:py-16 px-6 overflow-hidden">
       {/* Background grid */}
       <div className="absolute inset-0 bg-grid opacity-30" />
       
@@ -24,10 +24,10 @@ export const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold mb-3">
             <span className="gradient-text">Lightweight</span> Developer Tools
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-6 md:mb-10">
             All tools run locally in your browser. No installation required. 
             Privacy-first — your data never leaves your device.
           </p>
