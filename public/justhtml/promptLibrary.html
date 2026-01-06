@@ -2,32 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Prompt Library</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh;
-      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(30, 30, 47, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #3a3a4e;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    h1 {
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #2a2a3e;
+      color: #a5b4fc;
+      border: 1px solid #3a3a4e;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: #3a3a4e;
       color: #fff;
-      text-align: center;
-      margin-bottom: 30px;
+      border-color: #6366f1;
     }
+    .nav-title {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { color: #fff; text-align: center; margin-bottom: 25px; font-size: 1.5rem; }
     .search {
       width: 100%;
-      padding: 15px 20px;
+      padding: 14px 18px;
       font-size: 1rem;
       background: #2a2a3e;
       border: 2px solid #3a3a4e;
@@ -36,25 +70,26 @@
       margin-bottom: 20px;
       outline: none;
     }
-    .search:focus {
-      border-color: #6366f1;
-    }
+    .search:focus { border-color: #6366f1; }
     .prompt-card {
       background: #2a2a3e;
       border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 15px;
+      padding: 18px;
+      margin-bottom: 12px;
       cursor: pointer;
       transition: all 0.2s;
+      border: 2px solid transparent;
     }
     .prompt-card:hover {
       background: #3a3a4e;
       transform: translateY(-2px);
+      border-color: #6366f1;
     }
     .prompt-title {
       color: #fff;
-      font-size: 1.1rem;
-      margin-bottom: 10px;
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
     .prompt-text {
       color: #a5b4fc;
@@ -65,21 +100,38 @@
       display: inline-block;
       background: #6366f1;
       color: #fff;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
       font-size: 0.75rem;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .copied {
       background: #10b981 !important;
+      border-color: #059669 !important;
+    }
+    .copy-hint {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-bottom: 15px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📝 Prompt Library</h1>
-    <input type="text" class="search" placeholder="Search prompts..." id="search">
-    <div id="prompts"></div>
+  <nav class="nav-header">
+    <div class="nav-left">
+      <a href="/myapps" class="nav-btn">← Back</a>
+      <span class="nav-title">📝 Prompt Library</span>
+    </div>
+    <a href="/" class="nav-btn">🏠 Home</a>
+  </nav>
+
+  <div class="main-content">
+    <div class="container">
+      <input type="text" class="search" placeholder="Search prompts..." id="search">
+      <p class="copy-hint">Click on a prompt to copy it</p>
+      <div id="prompts"></div>
+    </div>
   </div>
 
   <script>

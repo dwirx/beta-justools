@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Memory Game</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -11,12 +11,57 @@
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
+    }
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(30, 30, 47, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #3a3a4e;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #2a2a3e;
+      color: #a5b4fc;
+      border: 1px solid #3a3a4e;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: #3a3a4e;
+      color: #fff;
+      border-color: #6366f1;
+    }
+    .nav-title {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
     }
     .container { text-align: center; }
-    h1 { color: #fff; margin-bottom: 10px; }
+    h1 { color: #fff; margin-bottom: 10px; font-size: 1.5rem; }
     .stats {
       display: flex;
       justify-content: center;
@@ -26,13 +71,16 @@
     }
     .board {
       display: grid;
-      grid-template-columns: repeat(4, 80px);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       justify-content: center;
+      max-width: 360px;
+      margin: 0 auto;
     }
     .card {
-      width: 80px;
-      height: 80px;
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: 80px;
       background: #2a2a3e;
       border-radius: 10px;
       cursor: pointer;
@@ -60,20 +108,37 @@
     }
     button:hover { background: #4f46e5; }
     @media (max-width: 400px) {
-      .board { grid-template-columns: repeat(4, 60px); }
-      .card { width: 60px; height: 60px; font-size: 1.5rem; }
+      .board { 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 8px;
+        max-width: 280px;
+      }
+      .card { 
+        max-width: 60px;
+        font-size: 1.5rem; 
+      }
+      h1 { font-size: 1.3rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🧠 Memory Game</h1>
-    <div class="stats">
-      <span>Moves: <strong id="moves">0</strong></span>
-      <span>Pairs: <strong id="pairs">0</strong>/8</span>
+  <nav class="nav-header">
+    <div class="nav-left">
+      <a href="/myapps" class="nav-btn">← Back</a>
+      <span class="nav-title">🧠 Memory Game</span>
     </div>
-    <div class="board" id="board"></div>
-    <button onclick="initGame()">New Game</button>
+    <a href="/" class="nav-btn">🏠 Home</a>
+  </nav>
+
+  <div class="main-content">
+    <div class="container">
+      <div class="stats">
+        <span>Moves: <strong id="moves">0</strong></span>
+        <span>Pairs: <strong id="pairs">0</strong>/8</span>
+      </div>
+      <div class="board" id="board"></div>
+      <button onclick="initGame()">New Game</button>
+    </div>
   </div>
 
   <script>
