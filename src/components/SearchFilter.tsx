@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { categories, Category } from '@/data/tools';
+import { categories, Category } from '@/lib/toolRegistry';
 
 interface SearchFilterProps {
   searchQuery: string;

@@ -3,11 +3,13 @@ import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { SearchFilter } from '@/components/SearchFilter';
 import { ToolsGrid } from '@/components/ToolsGrid';
-import { tools, Category } from '@/data/tools';
+import { getToolsMeta, categories, Category } from '@/lib/toolRegistry';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+
+  const tools = getToolsMeta();
 
   const filteredTools = useMemo(() => {
     return tools.filter((tool) => {
@@ -19,7 +21,7 @@ const Index = () => {
         tool.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, activeCategory]);
+  }, [tools, searchQuery, activeCategory]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,15 +42,7 @@ const Index = () => {
             Made with ❤️ — All tools run locally in your browser. No data is sent to any server.
           </p>
           <p className="mt-2">
-            Inspired by{' '}
-            <a
-              href="https://htmls.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              JustHTMLs
-            </a>
+            Total: <span className="text-primary font-medium">{tools.length}</span> tools available
           </p>
         </div>
       </footer>
