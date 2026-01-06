@@ -187,4 +187,13 @@ export const tools: Tool[] = [
     icon: '🔢',
     tags: ['number', 'binary', 'hex', 'convert'],
   },
+  {
+    id: 'purple-cipher',
+    name: 'Purple Cipher',
+    description: 'PURPLE cipher encryption/decryption simulator',
+    category: 'developer',
+    icon: '🟣',
+    tags: ['cipher', 'encrypt', 'decrypt', 'purple', 'cryptography'],
+    featured: true,
+  },
 ];

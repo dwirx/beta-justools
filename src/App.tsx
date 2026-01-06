@@ -19,6 +19,7 @@ import UrlEncoderPage from "./pages/tools/UrlEncoderPage";
 import TimestampConverterPage from "./pages/tools/TimestampConverterPage";
 import LoremGeneratorPage from "./pages/tools/LoremGeneratorPage";
 import NumberBasePage from "./pages/tools/NumberBasePage";
+import PurpleCipherPage from "./pages/tools/PurpleCipherPage";
 import MyAppsPage from "./pages/MyAppsPage";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/timestamp-converter" element={<TimestampConverterPage />} />
           <Route path="/lorem-generator" element={<LoremGeneratorPage />} />
           <Route path="/number-base" element={<NumberBasePage />} />
+          <Route path="/purple-cipher" element={<PurpleCipherPage />} />
           
           {/* My Apps */}
           <Route path="/myapps" element={<MyAppsPage />} />
