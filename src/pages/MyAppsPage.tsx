@@ -83,11 +83,11 @@ const MyAppsPage = () => {
           </h3>
           <p className="text-sm text-muted-foreground">
             <strong>Single File:</strong> Place your HTML file in{' '}
-            <code className="bg-muted px-1 rounded">public/myapps/game.html</code>
+            <code className="bg-muted px-1 rounded">public/justhtml/game.html</code>
             <br />
             <strong>Project:</strong> Create a folder like{' '}
             <code className="bg-muted px-1 rounded">
-              public/myapps/tictactoe/index.html
+              public/justhtml/tictactoe/index.html
             </code>{' '}
             with your files
           </p>
