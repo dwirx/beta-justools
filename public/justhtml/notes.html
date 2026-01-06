@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Notes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { color: #fff; text-align: center; margin-bottom: 30px; }
+    .new-note {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .new-note input {
+      flex: 1;
+      padding: 15px;
+      font-size: 1rem;
+      background: #2a2a3e;
+      border: 2px solid #3a3a4e;
+      border-radius: 10px;
+      color: #fff;
+      outline: none;
+    }
+    .new-note input:focus { border-color: #6366f1; }
+    button {
+      padding: 15px 25px;
+      font-size: 1rem;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover { background: #4f46e5; }
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .note {
+      background: #2a2a3e;
+      border-radius: 10px;
+      padding: 20px;
+      position: relative;
+    }
+    .note h3 {
+      color: #fff;
+      margin-bottom: 10px;
+      padding-right: 30px;
+    }
+    .note textarea {
+      width: 100%;
+      min-height: 100px;
+      background: transparent;
+      border: none;
+      color: #a5b4fc;
+      font-size: 0.95rem;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+    }
+    .note .delete {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      background: #ef4444;
+    }
+    .note .date {
+      color: #64748b;
+      font-size: 0.8rem;
+      margin-top: 10px;
+    }
+    .colors {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .colors span {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Quick Notes</h1>
+    <div class="new-note">
+      <input type="text" id="noteTitle" placeholder="Note title...">
+      <button onclick="addNote()">+ Add Note</button>
+    </div>
+    <div class="notes-grid" id="notesGrid"></div>
+  </div>
+
+  <script>
+    const colors = ['#2a2a3e', '#1e3a5f', '#3d1e5f', '#5f1e3d', '#1e5f3d'];
+    let notes = JSON.parse(localStorage.getItem('quickNotes')) || [];
+
+    function saveNotes() {
+      localStorage.setItem('quickNotes', JSON.stringify(notes));
+    }
+
+    function addNote() {
+      const title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+      notes.unshift({
+        id: Date.now(),
+        title,
+        content: '',
+        color: colors[0],
+        date: new Date().toLocaleDateString()
+      });
+      saveNotes();
+      document.getElementById('noteTitle').value = '';
+      renderNotes();
+    }
+
+    function updateNote(id, content) {
+      notes = notes.map(n => n.id === id ? { ...n, content } : n);
+      saveNotes();
+    }
+
+    function deleteNote(id) {
+      notes = notes.filter(n => n.id !== id);
+      saveNotes();
+      renderNotes();
+    }
+
+    function changeColor(id, color) {
+      notes = notes.map(n => n.id === id ? { ...n, color } : n);
+      saveNotes();
+      renderNotes();
+    }
+
+    function renderNotes() {
+      const grid = document.getElementById('notesGrid');
+      grid.innerHTML = notes.map(n => `
+        <div class="note" style="background: ${n.color}">
+          <button class="delete" onclick="deleteNote(${n.id})">×</button>
+          <h3>${n.title}</h3>
+          <textarea placeholder="Write your note..." onchange="updateNote(${n.id}, this.value)">${n.content}</textarea>
+          <div class="colors">
+            ${colors.map(c => `<span style="background:${c}" onclick="changeColor(${n.id},'${c}')"></span>`).join('')}
+          </div>
+          <div class="date">${n.date}</div>
+        </div>
+      `).join('');
+    }
+
+    renderNotes();
+  </script>
+</body>
+</html>

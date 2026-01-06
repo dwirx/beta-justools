@@ -5,21 +5,13 @@ export interface App {
   name: string;
   description?: string;
   type: AppType;
-  path: string; // For single file: game.html, for project: facedetection/index.html
+  path: string;
   category?: string;
   favorite?: boolean;
 }
 
-// Sample apps - users can add their own
 export const apps: App[] = [
-  {
-    id: 'prompt-library',
-    name: 'promptLibrary.html',
-    description: 'Prompt Library Tool',
-    type: 'single-file',
-    path: 'promptLibrary.html',
-    category: 'Tools',
-  },
+  // Games
   {
     id: 'tictactoe',
     name: 'Tic Tac Toe',
@@ -29,6 +21,23 @@ export const apps: App[] = [
     category: 'Games',
   },
   {
+    id: 'snake',
+    name: 'Snake Game',
+    description: 'Classic Snake Game with mobile controls',
+    type: 'project',
+    path: 'snake/index.html',
+    category: 'Games',
+  },
+  {
+    id: 'memory-game',
+    name: 'Memory Game',
+    description: 'Match pairs of cards to test your memory',
+    type: 'single-file',
+    path: 'memory-game.html',
+    category: 'Games',
+  },
+  // Tools
+  {
     id: 'calculator',
     name: 'Calculator',
     description: 'Simple Calculator',
@@ -36,6 +45,39 @@ export const apps: App[] = [
     path: 'calculator.html',
     category: 'Tools',
   },
+  {
+    id: 'stopwatch',
+    name: 'Stopwatch',
+    description: 'Stopwatch with lap timer',
+    type: 'single-file',
+    path: 'stopwatch.html',
+    category: 'Tools',
+  },
+  {
+    id: 'prompt-library',
+    name: 'Prompt Library',
+    description: 'Collection of useful prompts',
+    type: 'single-file',
+    path: 'promptLibrary.html',
+    category: 'Tools',
+  },
+  // Productivity
+  {
+    id: 'todo',
+    name: 'Todo List',
+    description: 'Simple todo list with localStorage',
+    type: 'single-file',
+    path: 'todo.html',
+    category: 'Productivity',
+  },
+  {
+    id: 'notes',
+    name: 'Quick Notes',
+    description: 'Take quick notes with color coding',
+    type: 'single-file',
+    path: 'notes.html',
+    category: 'Productivity',
+  },
 ];
 
-export const appCategories = ['All', 'Games', 'Tools', 'Mind'];
+export const appCategories = ['All', 'Games', 'Tools', 'Productivity'];
