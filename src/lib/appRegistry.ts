@@ -1,22 +1,25 @@
 // =============================================================
-// APP REGISTRY - Auto-detection untuk HTML Apps
+// APP REGISTRY - Full Auto-Detection untuk HTML & TSX Apps
 // =============================================================
 // 
-// CARA MENAMBAH APP BARU (TANPA KONFIGURASI!):
+// 🚀 CARA MENAMBAH APP BARU (ZERO CONFIG!):
 // 
-// 1. SINGLE FILE: Taruh file HTML di public/justhtml/
-//    Contoh: public/justhtml/helloworld.html
-//    -> Otomatis terdeteksi dengan nama "Helloworld"
-//    
-// 2. PROJECT FOLDER: Buat folder dengan index.html
-//    Contoh: public/justhtml/my-game/index.html
-//    -> Otomatis terdeteksi dengan nama "My Game"
+// TSX APP:
+//   1. Buat file di src/apps/NamaApp.tsx
+//   2. Export default component
+//   3. (Opsional) Export appMeta untuk kustomisasi
+//   4. SELESAI! Otomatis muncul di My Apps
 //
-// 3. KUSTOMISASI (Opsional): Tambah metadata di appCustomizations
+// HTML APP:
+//   1. Taruh file di public/justhtml/namaapp.html
+//   2. ATAU buat folder public/justhtml/namaapp/index.html
+//   3. SELESAI! Otomatis muncul di My Apps
 //
 // =============================================================
 
-export type AppType = 'single-file' | 'project';
+import { lazy, ComponentType } from 'react';
+
+export type AppType = 'single-file' | 'project' | 'tsx';
 export type AppCategory = 'Games' | 'Tools' | 'Productivity' | 'Education' | 'Entertainment' | 'Other';
 
 export interface AppMeta {
@@ -28,15 +31,10 @@ export interface AppMeta {
   category: AppCategory;
   icon?: string;
   featured?: boolean;
+  component?: ComponentType;
 }
 
-// =============================================================
-// KUSTOMISASI APPS (Opsional) - Untuk override auto-detection
-// =============================================================
-// Key = nama file tanpa ekstensi atau nama folder
-// Contoh: 'calculator' untuk calculator.html atau folder calculator/
-
-interface AppCustomization {
+export interface TsxAppMeta {
   name?: string;
   description?: string;
   category?: AppCategory;
@@ -44,7 +42,101 @@ interface AppCustomization {
   featured?: boolean;
 }
 
-const appCustomizations: Record<string, AppCustomization> = {
+// =============================================================
+// AUTO-DETECT TSX APPS dari src/apps/
+// =============================================================
+
+const tsxModules = import.meta.glob<{ 
+  default: ComponentType; 
+  appMeta?: TsxAppMeta 
+}>('/src/apps/*.tsx');
+
+const buildTsxApps = (): AppMeta[] => {
+  return Object.entries(tsxModules).map(([path, importFn]) => {
+    // Extract filename: /src/apps/HelloWorld.tsx -> HelloWorld
+    const filename = path.split('/').pop()?.replace('.tsx', '') || 'unknown';
+    const id = filename.toLowerCase().replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    
+    return {
+      id: `tsx-${id}`,
+      name: toReadableName(filename),
+      description: `TSX App: ${toReadableName(filename)}`,
+      type: 'tsx' as AppType,
+      path: path,
+      category: 'Other' as AppCategory,
+      icon: '⚛️',
+      featured: false,
+      component: lazy(importFn),
+    };
+  });
+};
+
+// =============================================================
+// AUTO-DETECT HTML APPS dari public/justhtml/
+// =============================================================
+// Menggunakan import.meta.glob untuk scan otomatis
+
+const htmlFiles = import.meta.glob('/public/justhtml/*.html', { query: '?url', import: 'default' });
+const htmlProjects = import.meta.glob('/public/justhtml/*/index.html', { query: '?url', import: 'default' });
+
+const buildHtmlApps = (): AppMeta[] => {
+  const apps: AppMeta[] = [];
+  
+  // Single HTML files
+  Object.keys(htmlFiles).forEach(path => {
+    const filename = path.split('/').pop()?.replace('.html', '') || 'unknown';
+    const id = filename.toLowerCase();
+    const custom = htmlCustomizations[id] || htmlCustomizations[filename] || {};
+    
+    apps.push({
+      id: `html-${id}`,
+      name: custom.name || toReadableName(filename),
+      description: custom.description || `HTML App: ${toReadableName(filename)}`,
+      type: 'single-file',
+      path: `${filename}.html`,
+      category: custom.category || 'Other',
+      icon: custom.icon || '📄',
+      featured: custom.featured || false,
+    });
+  });
+  
+  // Project folders with index.html
+  Object.keys(htmlProjects).forEach(path => {
+    // /public/justhtml/snake/index.html -> snake
+    const parts = path.split('/');
+    const folderName = parts[parts.length - 2];
+    const id = folderName.toLowerCase();
+    const custom = htmlCustomizations[id] || htmlCustomizations[folderName] || {};
+    
+    apps.push({
+      id: `html-${id}`,
+      name: custom.name || toReadableName(folderName),
+      description: custom.description || `HTML Project: ${toReadableName(folderName)}`,
+      type: 'project',
+      path: `${folderName}/index.html`,
+      category: custom.category || 'Other',
+      icon: custom.icon || '📁',
+      featured: custom.featured || false,
+    });
+  });
+  
+  return apps;
+};
+
+// =============================================================
+// KUSTOMISASI HTML APPS (Opsional)
+// =============================================================
+// Untuk override nama, deskripsi, kategori, icon
+
+interface HtmlCustomization {
+  name?: string;
+  description?: string;
+  category?: AppCategory;
+  icon?: string;
+  featured?: boolean;
+}
+
+const htmlCustomizations: Record<string, HtmlCustomization> = {
   // ===== GAMES =====
   'tictactoe': {
     name: 'Tic Tac Toe',
@@ -80,7 +172,7 @@ const appCustomizations: Record<string, AppCustomization> = {
     category: 'Tools',
     icon: '⏱️',
   },
-  'promptLibrary': {
+  'promptlibrary': {
     name: 'Prompt Library',
     description: 'Collection of useful AI prompts',
     category: 'Tools',
@@ -103,94 +195,86 @@ const appCustomizations: Record<string, AppCustomization> = {
 };
 
 // =============================================================
-// AUTO-DETECTION: Daftar file yang ada di public/justhtml/
-// =============================================================
-// Update daftar ini saat menambah file baru
-// Format: { path: string, type: AppType }
-
-const detectedFiles: { path: string; type: AppType }[] = [
-  // Single files
-  { path: 'calculator.html', type: 'single-file' },
-  { path: 'memory-game.html', type: 'single-file' },
-  { path: 'notes.html', type: 'single-file' },
-  { path: 'promptLibrary.html', type: 'single-file' },
-  { path: 'stopwatch.html', type: 'single-file' },
-  { path: 'todo.html', type: 'single-file' },
-  // Project folders
-  { path: 'snake/index.html', type: 'project' },
-  { path: 'tictactoe/index.html', type: 'project' },
-];
-
-// =============================================================
-// HELPER: Convert filename/folder to readable name
+// HELPER: Convert filename to readable name
 // =============================================================
 
 const toReadableName = (filename: string): string => {
-  // Remove extension and path
-  const name = filename
-    .replace(/\.html$/, '')
-    .replace(/\/index\.html$/, '')
-    .split('/')
-    .pop() || filename;
-  
-  // Convert camelCase, kebab-case, snake_case to Title Case
-  return name
+  return filename
     .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase
     .replace(/[-_]/g, ' ') // kebab-case & snake_case
     .replace(/\b\w/g, c => c.toUpperCase()) // Title Case
     .trim();
 };
 
-const getIdFromPath = (path: string): string => {
-  return path
-    .replace(/\.html$/, '')
-    .replace(/\/index\.html$/, '')
-    .split('/')
-    .pop() || path;
-};
+// =============================================================
+// BUILD COMBINED REGISTRY
+// =============================================================
 
-// =============================================================
-// BUILD REGISTRY - Auto-generate dari detectedFiles
-// =============================================================
+let _appRegistry: AppMeta[] | null = null;
 
 const buildAppRegistry = (): AppMeta[] => {
-  return detectedFiles.map(({ path, type }) => {
-    const id = getIdFromPath(path);
-    const custom = appCustomizations[id] || {};
-    
-    return {
-      id,
-      name: custom.name || toReadableName(path),
-      description: custom.description || `Open ${toReadableName(path)}`,
-      type,
-      path,
-      category: custom.category || 'Other',
-      icon: custom.icon || '📦',
-      featured: custom.featured || false,
-    };
-  });
+  if (_appRegistry) return _appRegistry;
+  
+  const htmlApps = buildHtmlApps();
+  const tsxApps = buildTsxApps();
+  
+  _appRegistry = [...htmlApps, ...tsxApps];
+  return _appRegistry;
 };
 
-const appRegistry: AppMeta[] = buildAppRegistry();
+// Lazy initialization
+const getRegistry = () => buildAppRegistry();
 
 // =============================================================
-// HELPER FUNCTIONS
+// ASYNC LOADING untuk TSX Apps dengan metadata
 // =============================================================
 
-export const getAppRegistry = () => appRegistry;
+export const loadTsxAppWithMeta = async (app: AppMeta): Promise<AppMeta> => {
+  if (app.type !== 'tsx') return app;
+  
+  try {
+    const importFn = tsxModules[app.path];
+    if (!importFn) return app;
+    
+    const module = await importFn();
+    const meta = module.appMeta;
+    
+    if (meta) {
+      return {
+        ...app,
+        name: meta.name || app.name,
+        description: meta.description || app.description,
+        category: meta.category || app.category,
+        icon: meta.icon || app.icon,
+        featured: meta.featured ?? app.featured,
+        component: module.default,
+      };
+    }
+    
+    return { ...app, component: module.default };
+  } catch {
+    return app;
+  }
+};
+
+// =============================================================
+// EXPORT FUNCTIONS
+// =============================================================
+
+export const getAppRegistry = () => getRegistry();
 
 export const getAppById = (id: string) => 
-  appRegistry.find(app => app.id === id);
+  getRegistry().find(app => app.id === id);
 
 export const getAppsByCategory = (category: AppCategory) => 
-  appRegistry.filter(app => app.category === category);
+  getRegistry().filter(app => app.category === category);
 
 export const getFeaturedApps = () => 
-  appRegistry.filter(app => app.featured);
+  getRegistry().filter(app => app.featured);
 
 export const searchApps = (query: string) => {
   const q = query.toLowerCase();
-  return appRegistry.filter(app => 
+  return getRegistry().filter(app => 
     app.name.toLowerCase().includes(q) ||
     app.description.toLowerCase().includes(q) ||
     app.category.toLowerCase().includes(q)
@@ -206,19 +290,14 @@ export const getAppCategories = (): AppCategory[] => [
   'Other',
 ];
 
-export const getAppUrl = (app: AppMeta) => `/justhtml/${app.path}`;
+export const getAppUrl = (app: AppMeta): string => {
+  if (app.type === 'tsx') {
+    return `/apps/${app.id.replace('tsx-', '')}`;
+  }
+  return `/justhtml/${app.path}`;
+};
 
-// =============================================================
-// QUICK ADD FUNCTIONS - Untuk menambah file baru dengan cepat
-// =============================================================
+// For dynamic import
+export { tsxModules };
 
-/**
- * Untuk menambah file baru, cukup tambahkan ke detectedFiles:
- * 
- * Single file: { path: 'namafile.html', type: 'single-file' }
- * Project:     { path: 'namafolder/index.html', type: 'project' }
- * 
- * Opsional: Tambah kustomisasi di appCustomizations
- */
-
-export default appRegistry;
+export default getRegistry();

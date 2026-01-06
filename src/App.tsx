@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,20 +8,32 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MyAppsPage from "./pages/MyAppsPage";
 
-// Import tool registry for dynamic routing
+// Import registries for dynamic routing
 import toolRegistry from "./lib/toolRegistry";
+import { tsxModules } from "./lib/appRegistry";
 
 const queryClient = new QueryClient();
 
-// Loading component for lazy-loaded tools
+// Loading component for lazy-loaded tools/apps
 const ToolLoading = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <p className="text-muted-foreground text-sm">Loading tool...</p>
+      <p className="text-muted-foreground text-sm">Loading...</p>
     </div>
   </div>
 );
+
+// Build TSX app routes
+const tsxAppRoutes = Object.entries(tsxModules).map(([path, importFn]) => {
+  const filename = path.split('/').pop()?.replace('.tsx', '') || 'unknown';
+  const routeId = filename.toLowerCase().replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  
+  return {
+    path: `/apps/${routeId}`,
+    component: lazy(importFn),
+  };
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -39,6 +51,15 @@ const App = () => (
                 key={tool.id} 
                 path={`/${tool.id}`} 
                 element={<tool.component />} 
+              />
+            ))}
+            
+            {/* Dynamic TSX App Routes - Auto-detected from src/apps/ */}
+            {tsxAppRoutes.map((route) => (
+              <Route 
+                key={route.path} 
+                path={route.path} 
+                element={<route.component />} 
               />
             ))}
             
