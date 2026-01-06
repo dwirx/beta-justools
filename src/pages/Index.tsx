@@ -3,13 +3,11 @@ import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { SearchFilter } from '@/components/SearchFilter';
 import { ToolsGrid } from '@/components/ToolsGrid';
-import { ToolModal } from '@/components/ToolModal';
-import { tools, Tool, Category } from '@/data/tools';
+import { tools, Category } from '@/data/tools';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
 
   const filteredTools = useMemo(() => {
     return tools.filter((tool) => {
@@ -33,8 +31,7 @@ const Index = () => {
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
       />
-      <ToolsGrid tools={filteredTools} onToolClick={setSelectedTool} />
-      <ToolModal tool={selectedTool} onClose={() => setSelectedTool(null)} />
+      <ToolsGrid tools={filteredTools} />
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-8 px-6">
