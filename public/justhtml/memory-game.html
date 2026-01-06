@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container { text-align: center; }
+    h1 { color: #fff; margin-bottom: 10px; }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+      color: #a5b4fc;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      gap: 10px;
+      justify-content: center;
+    }
+    .card {
+      width: 80px;
+      height: 80px;
+      background: #2a2a3e;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      transition: all 0.3s;
+      border: 2px solid #3a3a4e;
+    }
+    .card:hover { transform: scale(1.05); border-color: #6366f1; }
+    .card.flipped { background: #6366f1; }
+    .card.matched { background: #10b981; border-color: #059669; }
+    .card .front { display: none; }
+    .card.flipped .front, .card.matched .front { display: block; }
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 1rem;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover { background: #4f46e5; }
+    @media (max-width: 400px) {
+      .board { grid-template-columns: repeat(4, 60px); }
+      .card { width: 60px; height: 60px; font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Memory Game</h1>
+    <div class="stats">
+      <span>Moves: <strong id="moves">0</strong></span>
+      <span>Pairs: <strong id="pairs">0</strong>/8</span>
+    </div>
+    <div class="board" id="board"></div>
+    <button onclick="initGame()">New Game</button>
+  </div>
+
+  <script>
+    const emojis = ['🎮', '🎯', '🎲', '🎪', '🎨', '🎭', '🎪', '🎸'];
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let canFlip = true;
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function initGame() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      cards = shuffle([...emojis, ...emojis]);
+      flippedCards = [];
+      matchedPairs = 0;
+      moves = 0;
+      canFlip = true;
+      
+      document.getElementById('moves').textContent = moves;
+      document.getElementById('pairs').textContent = matchedPairs;
+
+      cards.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.index = index;
+        card.dataset.emoji = emoji;
+        card.innerHTML = `<span class="front">${emoji}</span>`;
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      
+      card.classList.add('flipped');
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        moves++;
+        document.getElementById('moves').textContent = moves;
+        canFlip = false;
+
+        if (flippedCards[0].dataset.emoji === flippedCards[1].dataset.emoji) {
+          flippedCards.forEach(c => c.classList.add('matched'));
+          matchedPairs++;
+          document.getElementById('pairs').textContent = matchedPairs;
+          flippedCards = [];
+          canFlip = true;
+
+          if (matchedPairs === 8) {
+            setTimeout(() => alert(`You won in ${moves} moves!`), 300);
+          }
+        } else {
+          setTimeout(() => {
+            flippedCards.forEach(c => c.classList.remove('flipped'));
+            flippedCards = [];
+            canFlip = true;
+          }, 1000);
+        }
+      }
+    }
+
+    initGame();
+  </script>
+</body>
+</html>

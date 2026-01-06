@@ -1,0 +1,100 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  text-align: center;
+}
+
+h1 {
+  color: #fff;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.score {
+  color: #10b981;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+canvas {
+  background: #0f0f1a;
+  border-radius: 10px;
+  border: 2px solid #3a3a4e;
+}
+
+.controls {
+  margin-top: 20px;
+}
+
+.controls button {
+  padding: 15px 30px;
+  font-size: 1rem;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.controls button:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.controls p {
+  color: #a5b4fc;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.mobile-controls {
+  display: none;
+  margin-top: 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.mobile-controls div {
+  display: flex;
+  gap: 40px;
+}
+
+.mobile-controls button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  background: #2a2a3e;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 500px) {
+  canvas {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .mobile-controls {
+    display: flex;
+  }
+  
+  .controls p {
+    display: none;
+  }
+}

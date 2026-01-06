@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stopwatch</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container { text-align: center; }
+    h1 { color: #fff; margin-bottom: 30px; }
+    .display {
+      font-size: 4rem;
+      font-family: 'SF Mono', monospace;
+      color: #fff;
+      background: #0f0f1a;
+      padding: 30px 50px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      border: 2px solid #3a3a4e;
+    }
+    .display span { color: #6366f1; }
+    .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+    button {
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 100px;
+    }
+    .start { background: #10b981; color: #fff; }
+    .start:hover { background: #059669; }
+    .pause { background: #f59e0b; color: #fff; }
+    .pause:hover { background: #d97706; }
+    .reset { background: #ef4444; color: #fff; }
+    .reset:hover { background: #dc2626; }
+    .lap { background: #6366f1; color: #fff; }
+    .lap:hover { background: #4f46e5; }
+    .laps {
+      margin-top: 30px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .laps div {
+      color: #a5b4fc;
+      padding: 8px 20px;
+      background: #2a2a3e;
+      margin: 5px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    @media (max-width: 400px) {
+      .display { font-size: 2.5rem; padding: 20px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⏱️ Stopwatch</h1>
+    <div class="display">
+      <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>.<span id="ms">00</span>
+    </div>
+    <div class="buttons">
+      <button class="start" id="startBtn" onclick="start()">Start</button>
+      <button class="pause" id="pauseBtn" onclick="pause()" style="display:none">Pause</button>
+      <button class="lap" onclick="lap()">Lap</button>
+      <button class="reset" onclick="reset()">Reset</button>
+    </div>
+    <div class="laps" id="laps"></div>
+  </div>
+
+  <script>
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval = null;
+    let lapCount = 0;
+
+    function start() {
+      if (timerInterval) return;
+      startTime = Date.now() - elapsedTime;
+      timerInterval = setInterval(updateDisplay, 10);
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('pauseBtn').style.display = 'inline-block';
+    }
+
+    function pause() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('pauseBtn').style.display = 'none';
+    }
+
+    function reset() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      elapsedTime = 0;
+      lapCount = 0;
+      document.getElementById('hours').textContent = '00';
+      document.getElementById('minutes').textContent = '00';
+      document.getElementById('seconds').textContent = '00';
+      document.getElementById('ms').textContent = '00';
+      document.getElementById('laps').innerHTML = '';
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('pauseBtn').style.display = 'none';
+    }
+
+    function lap() {
+      if (!timerInterval) return;
+      lapCount++;
+      const time = formatTime(elapsedTime);
+      const lapDiv = document.createElement('div');
+      lapDiv.innerHTML = `<span>Lap ${lapCount}</span><span>${time}</span>`;
+      document.getElementById('laps').prepend(lapDiv);
+    }
+
+    function updateDisplay() {
+      elapsedTime = Date.now() - startTime;
+      const time = new Date(elapsedTime);
+      
+      document.getElementById('hours').textContent = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
+      document.getElementById('minutes').textContent = String(time.getUTCMinutes()).padStart(2, '0');
+      document.getElementById('seconds').textContent = String(time.getUTCSeconds()).padStart(2, '0');
+      document.getElementById('ms').textContent = String(Math.floor(time.getUTCMilliseconds() / 10)).padStart(2, '0');
+    }
+
+    function formatTime(ms) {
+      const time = new Date(ms);
+      const h = String(Math.floor(ms / 3600000)).padStart(2, '0');
+      const m = String(time.getUTCMinutes()).padStart(2, '0');
+      const s = String(time.getUTCSeconds()).padStart(2, '0');
+      const mil = String(Math.floor(time.getUTCMilliseconds() / 10)).padStart(2, '0');
+      return `${h}:${m}:${s}.${mil}`;
+    }
+  </script>
+</body>
+</html>
