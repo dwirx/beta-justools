@@ -214,6 +214,13 @@ interface HtmlCustomization {
 
 const htmlCustomizations: Record<string, HtmlCustomization> = {
   // ===== GAMES =====
+  'snake-ai': {
+    name: 'Snake AI Battle',
+    description: 'Smart AI Snake Battle - Watch AI play or fight against it!',
+    category: 'Games',
+    icon: '🤖',
+    featured: true,
+  },
   'tictactoe': {
     name: 'Tic Tac Toe',
     description: 'Classic Tic Tac Toe game for two players',
