@@ -1,15 +1,21 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Home, ExternalLink, Maximize2 } from 'lucide-react';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { ArrowLeft, Home, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getAppById } from '@/lib/appRegistry';
 
 /**
  * Wrapper untuk HTML apps dengan header Back & Home.
  * HTML app ditampilkan dalam iframe dengan header di atas.
+ * Jika ?standalone=true, tampil full tanpa header.
  */
 const HtmlAppWrapper = () => {
   const { appId } = useParams<{ appId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if opened in standalone mode (new tab tanpa header)
+  const searchParams = new URLSearchParams(location.search);
+  const isStandalone = searchParams.get('standalone') === 'true';
   
   const app = getAppById(`html-${appId}`);
   
@@ -34,8 +40,23 @@ const HtmlAppWrapper = () => {
   const iframeSrc = `/justhtml/${app.path}`;
 
   const handleOpenInNewTab = () => {
-    window.open(iframeSrc, '_blank');
+    // Open dengan ?standalone=true agar tanpa header (full app)
+    window.open(`${location.pathname}?standalone=true`, '_blank');
   };
+
+  // Jika standalone mode, render iframe full screen tanpa header
+  if (isStandalone) {
+    return (
+      <div className="h-screen w-screen">
+        <iframe
+          src={iframeSrc}
+          className="w-full h-full border-0"
+          title={app.name}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">

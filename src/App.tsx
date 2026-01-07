@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Home } from 'lucide-react';
+import { BrowserRouter, Routes, Route, useNavigate, Link, useLocation } from "react-router-dom";
+import { ArrowLeft, Home, Maximize2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -52,10 +52,26 @@ interface AppWrapperProps {
   component: ComponentType;
   name: string;
   icon: string;
+  routePath: string;
 }
 
-const AppWithHeader = ({ component: Component, name, icon }: AppWrapperProps) => {
+const AppWithHeader = ({ component: Component, name, icon, routePath }: AppWrapperProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if opened in standalone mode (new tab tanpa header)
+  const searchParams = new URLSearchParams(location.search);
+  const isStandalone = searchParams.get('standalone') === 'true';
+
+  const handleOpenInNewTab = () => {
+    // Open dengan ?standalone=true agar tanpa header
+    window.open(`${location.pathname}?standalone=true`, '_blank');
+  };
+
+  // Jika standalone mode, render app saja tanpa header
+  if (isStandalone) {
+    return <Component />;
+  }
   
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -80,16 +96,30 @@ const AppWithHeader = ({ component: Component, name, icon }: AppWrapperProps) =>
           </div>
         </div>
 
-        <Link to="/">
-          <Button 
-            variant="default" 
+        <div className="flex items-center gap-2">
+          {/* Open in new tab */}
+          <Button
+            variant="ghost"
             size="sm"
-            className="h-8 sm:h-9 px-2.5 sm:px-3 gap-1.5 text-xs sm:text-sm"
+            onClick={handleOpenInNewTab}
+            className="h-8 sm:h-9 px-2 sm:px-2.5 text-muted-foreground hover:text-foreground"
+            title="Open in new tab"
           >
-            <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Home</span>
+            <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
-        </Link>
+
+          {/* Home Button */}
+          <Link to="/">
+            <Button 
+              variant="default" 
+              size="sm"
+              className="h-8 sm:h-9 px-2.5 sm:px-3 gap-1.5 text-xs sm:text-sm"
+            >
+              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Home</span>
+            </Button>
+          </Link>
+        </div>
       </header>
       
       {/* App Content */}
@@ -170,6 +200,7 @@ const App = () => (
                     component={route.component} 
                     name={route.name}
                     icon={route.icon}
+                    routePath={route.path}
                   />
                 } 
               />
