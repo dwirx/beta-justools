@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Wrench, Atom, Globe } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -13,6 +14,13 @@ import {
   type SectionId,
   SECTIONS,
 } from '@/lib/unifiedRegistry';
+
+// Storage keys for state persistence
+const STORAGE_KEYS = {
+  TAB: 'devtools_active_tab',
+  SCROLL: 'devtools_scroll_position',
+  SEARCH: 'devtools_search_query',
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TABS CONFIG
@@ -33,53 +41,52 @@ const Hero = () => {
   const stats = getStats();
 
   const statItems = [
-    { value: stats.tools, label: 'Tools', icon: '🛠️' },
-    { value: stats.tsxApps, label: 'React Apps', icon: '⚛️' },
-    { value: stats.htmlApps, label: 'HTML Apps', icon: '🌐' },
-    { value: stats.total, label: 'Total', icon: '📦' },
+    { value: stats.tools, label: 'Tools', icon: '🛠️', color: 'text-emerald-400' },
+    { value: stats.tsxApps, label: 'React', icon: '⚛️', color: 'text-cyan-400' },
+    { value: stats.htmlApps, label: 'HTML', icon: '🌐', color: 'text-orange-400' },
+    { value: stats.total, label: 'Total', icon: '📦', color: 'text-primary' },
   ];
 
   return (
-    <section className="relative py-6 sm:py-8 md:py-12 px-4 sm:px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-30" />
+    <section className="relative py-4 sm:py-8 md:py-12 px-3 sm:px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-20" />
       <div className="hidden sm:block absolute top-0 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-primary/20 rounded-full blur-3xl" />
       <div className="hidden sm:block absolute bottom-0 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl" />
 
       <div className="relative max-w-4xl mx-auto text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-3">
+          <h2 className="text-xl sm:text-3xl md:text-5xl font-bold mb-1.5 sm:mb-3">
             <span className="gradient-text">All-in-One</span> Developer Hub
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-4 sm:mb-6 px-2">
-            Tools, React Apps, dan HTML Apps — semua auto-detected dan siap pakai.
-            <br />
-            <span className="text-xs opacity-75">100% lokal, privasi terjamin.</span>
+          <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-3 sm:mb-6 px-1">
+            Tools, React Apps, dan HTML Apps — semua siap pakai.
+            <span className="hidden sm:inline"><br />100% lokal, privasi terjamin.</span>
           </p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3"
+          className="grid grid-cols-4 gap-1.5 sm:gap-3"
         >
           {statItems.map((stat, index) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 + index * 0.1 }}
-              className="stat-card"
+              transition={{ delay: 0.25 + index * 0.05 }}
+              className="stat-card py-2.5 sm:py-4"
             >
-              <span className="text-xl sm:text-2xl mb-1">{stat.icon}</span>
-              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+              <span className="text-base sm:text-2xl">{stat.icon}</span>
+              <span className={`text-lg sm:text-2xl md:text-3xl font-bold ${stat.color}`}>
                 {stat.value}
               </span>
-              <span className="text-xs sm:text-sm text-muted-foreground">{stat.label}</span>
+              <span className="text-[10px] sm:text-sm text-muted-foreground">{stat.label}</span>
             </motion.div>
           ))}
         </motion.div>
@@ -93,8 +100,90 @@ const Hero = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Index = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<SectionId | 'all'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isInitialMount = useRef(true);
+  
+  // Get saved state from sessionStorage (persists during browser session)
+  const getSavedTab = (): SectionId | 'all' => {
+    const saved = sessionStorage.getItem(STORAGE_KEYS.TAB);
+    if (saved && ['all', 'tools', 'apps', 'html'].includes(saved)) {
+      return saved as SectionId | 'all';
+    }
+    return 'all';
+  };
+
+  const getSavedSearch = (): string => {
+    return sessionStorage.getItem(STORAGE_KEYS.SEARCH) || '';
+  };
+  
+  // Initialize state from URL params first, then sessionStorage
+  const tabFromUrl = searchParams.get('tab') as SectionId | 'all' | null;
+  const initialTab = tabFromUrl && ['all', 'tools', 'apps', 'html'].includes(tabFromUrl) 
+    ? tabFromUrl 
+    : getSavedTab();
+
+  const [activeTab, setActiveTabState] = useState<SectionId | 'all'>(initialTab);
+  const [searchQuery, setSearchQuery] = useState(getSavedSearch());
+
+  // Update tab and save to storage
+  const setActiveTab = (tab: SectionId | 'all') => {
+    setActiveTabState(tab);
+    sessionStorage.setItem(STORAGE_KEYS.TAB, tab);
+    
+    // Update URL
+    if (tab === 'all') {
+      searchParams.delete('tab');
+    } else {
+      searchParams.set('tab', tab);
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
+
+  // Save search query to storage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.SEARCH, searchQuery);
+  }, [searchQuery]);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      const savedScroll = sessionStorage.getItem(STORAGE_KEYS.SCROLL);
+      if (savedScroll) {
+        // Small delay to ensure DOM is ready
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(savedScroll, 10));
+        });
+      }
+    }
+  }, []);
+
+  // Save scroll position before leaving
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem(STORAGE_KEYS.SCROLL, window.scrollY.toString());
+    };
+
+    const handleScroll = () => {
+      sessionStorage.setItem(STORAGE_KEYS.SCROLL, window.scrollY.toString());
+    };
+
+    // Throttled scroll save
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    const throttledScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScroll, 100);
+    };
+
+    window.addEventListener('scroll', throttledScroll);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   const filteredItems = useMemo(() => {
     // Get items based on active tab
@@ -125,26 +214,34 @@ const Index = () => {
 
       {/* Search & Tabs */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="px-4 sm:px-6 mb-6"
+        className="px-3 sm:px-6 mb-4 sm:mb-6 sticky top-[52px] sm:top-[64px] z-40 bg-background/95 backdrop-blur-xl py-3 -mt-1 border-b border-border/30"
       >
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Cari tools, apps..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input pl-10 sm:pl-12 text-sm sm:text-base py-2.5 sm:py-3"
+              className="search-input pl-9 sm:pl-11 text-sm py-2 sm:py-3 rounded-xl"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground"
+              >
+                <span className="text-xs">×</span>
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center scrollbar-hide">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-center scrollbar-hide snap-x snap-mandatory">
             {TABS.map((tab) => {
               const count = tab.id === 'all' ? stats.total :
                            tab.id === 'tools' ? stats.tools :
@@ -154,13 +251,14 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`filter-button whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 ${
+                  className={`filter-button whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2 flex items-center gap-1 sm:gap-1.5 snap-start min-w-fit active:scale-95 transition-all ${
                     activeTab === tab.id ? 'active' : ''
                   }`}
                 >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                  <span className="text-[10px] opacity-60">({count})</span>
+                  <span className="sm:hidden">{tab.icon}</span>
+                  <span className="hidden sm:inline">{tab.icon}</span>
+                  <span>{tab.id === 'apps' ? <span className="sm:hidden">React</span> : null}{tab.id === 'apps' ? <span className="hidden sm:inline">{tab.label}</span> : tab.label}</span>
+                  <span className="text-[10px] opacity-60 tabular-nums">({count})</span>
                 </button>
               );
             })}
@@ -175,12 +273,13 @@ const Index = () => {
       />
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-6 sm:py-8 px-6">
-        <div className="max-w-6xl mx-auto text-center text-sm text-muted-foreground">
-          <p>Made with ❤️ — Semua berjalan lokal di browser. Tidak ada data yang dikirim ke server.</p>
-          <p className="mt-2">
-            Total: <span className="text-primary font-medium">{stats.total}</span> items
-            ({stats.tools} tools, {stats.tsxApps} react apps, {stats.htmlApps} html apps)
+      <footer className="border-t border-border/50 py-4 sm:py-8 px-4 sm:px-6 safe-bottom">
+        <div className="max-w-6xl mx-auto text-center text-xs sm:text-sm text-muted-foreground">
+          <p className="hidden sm:block">Made with ❤️ — Semua berjalan lokal di browser. Tidak ada data yang dikirim ke server.</p>
+          <p className="sm:hidden">Made with ❤️ — 100% lokal & privat</p>
+          <p className="mt-1.5 sm:mt-2">
+            <span className="text-primary font-medium">{stats.total}</span> items
+            <span className="hidden sm:inline"> ({stats.tools} tools, {stats.tsxApps} react apps, {stats.htmlApps} html apps)</span>
           </p>
         </div>
       </footer>

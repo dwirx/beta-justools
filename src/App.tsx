@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MyAppsPage from "./pages/MyAppsPage";
 import HtmlAppWrapper from "./pages/HtmlAppWrapper";
+import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 
 // Import registries for dynamic routing
 import toolRegistry from "./lib/toolRegistry";
@@ -176,6 +177,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAUpdatePrompt />
       <BrowserRouter>
         <Suspense fallback={<ToolLoading />}>
           <Routes>
