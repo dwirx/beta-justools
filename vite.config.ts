@@ -133,21 +133,30 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
+    cssCodeSplit: true,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks for better caching
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'animation': ['framer-motion'],
-          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          // Core React - cached long term
+          'react-core': ['react', 'react-dom'],
+          'react-router': ['react-router-dom'],
+          // UI components
+          'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip'],
         },
       },
     },
     // Chunk size warnings
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600,
   },
-  // Optimize dependencies
+  // Optimize dependencies - pre-bundle for faster dev
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: ['@tanstack/react-virtual'],
+  },
+  // Enable esbuild for faster builds
+  esbuild: {
+    legalComments: 'none',
+    treeShaking: true,
   },
 }));

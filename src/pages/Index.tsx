@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef, memo } from 'react';
+import { useState, useMemo, useEffect, useRef, memo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Wrench, Atom, Globe, X, WifiOff } from 'lucide-react';
+import { Search, X, WifiOff, Globe, Wrench, Atom } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { UnifiedGrid } from '@/components/UnifiedGrid';
 import { GridSkeleton } from '@/components/Skeleton';
@@ -39,36 +39,19 @@ const TABS: { id: SectionId | 'all'; label: string; icon: React.ReactNode }[] = 
 const Hero = memo(() => {
   const stats = getStats();
 
-  const statItems = [
-    { value: stats.tools, label: 'Tools', icon: '🛠️', color: 'text-emerald-400' },
-    { value: stats.tsxApps, label: 'React', icon: '⚛️', color: 'text-cyan-400' },
-    { value: stats.htmlApps, label: 'HTML', icon: '🌐', color: 'text-orange-400' },
-    { value: stats.total, label: 'Total', icon: '📦', color: 'text-primary' },
-  ];
-
   return (
-    <section className="relative py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
+    <section className="py-4 sm:py-6 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
-          <span className="gradient-text">All-in-One</span> Developer Hub
+        <h2 className="text-lg sm:text-2xl font-bold mb-1">
+          <span className="gradient-text">All-in-One</span> Dev Hub
         </h2>
-        <p className="text-[11px] xs:text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-          Tools, React Apps, HTML Apps — 100% lokal & privat
+        <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+          100% lokal & privat
         </p>
-
-        <div className="grid grid-cols-4 gap-1.5 xs:gap-2 sm:gap-3">
-          {statItems.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-card/50 border border-border/50 rounded-xl py-2 xs:py-2.5 sm:py-3 px-1 text-center"
-            >
-              <div className="text-sm xs:text-base sm:text-lg">{stat.icon}</div>
-              <div className={`text-base xs:text-lg sm:text-xl font-bold ${stat.color}`}>
-                {stat.value}
-              </div>
-              <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
+        <div className="flex justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
+          <span className="text-emerald-400">🛠️ {stats.tools}</span>
+          <span className="text-cyan-400">⚛️ {stats.tsxApps}</span>
+          <span className="text-orange-400">🌐 {stats.htmlApps}</span>
         </div>
       </div>
     </section>
@@ -108,63 +91,35 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState(getSavedSearch());
 
   // Update tab and save to storage
-  const setActiveTab = (tab: SectionId | 'all') => {
+  const setActiveTab = useCallback((tab: SectionId | 'all') => {
     setActiveTabState(tab);
     sessionStorage.setItem(STORAGE_KEYS.TAB, tab);
-    
-    // Update URL
-    if (tab === 'all') {
-      searchParams.delete('tab');
-    } else {
-      searchParams.set('tab', tab);
-    }
-    setSearchParams(searchParams, { replace: true });
-  };
+    const params = new URLSearchParams(searchParams);
+    if (tab === 'all') params.delete('tab');
+    else params.set('tab', tab);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
 
-  // Save search query to storage
+  // Save state on unmount/tab change only
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.SEARCH, searchQuery);
+    const saveState = () => {
+      sessionStorage.setItem(STORAGE_KEYS.SEARCH, searchQuery);
+      sessionStorage.setItem(STORAGE_KEYS.SCROLL, String(window.scrollY));
+    };
+    window.addEventListener('beforeunload', saveState);
+    return () => {
+      saveState();
+      window.removeEventListener('beforeunload', saveState);
+    };
   }, [searchQuery]);
 
-  // Restore scroll position on mount
+  // Restore scroll on mount
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      const savedScroll = sessionStorage.getItem(STORAGE_KEYS.SCROLL);
-      if (savedScroll) {
-        // Small delay to ensure DOM is ready
-        requestAnimationFrame(() => {
-          window.scrollTo(0, parseInt(savedScroll, 10));
-        });
-      }
+      const s = sessionStorage.getItem(STORAGE_KEYS.SCROLL);
+      if (s) requestAnimationFrame(() => window.scrollTo(0, +s));
     }
-  }, []);
-
-  // Save scroll position before leaving
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      sessionStorage.setItem(STORAGE_KEYS.SCROLL, window.scrollY.toString());
-    };
-
-    const handleScroll = () => {
-      sessionStorage.setItem(STORAGE_KEYS.SCROLL, window.scrollY.toString());
-    };
-
-    // Throttled scroll save
-    let scrollTimeout: ReturnType<typeof setTimeout>;
-    const throttledScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(handleScroll, 100);
-    };
-
-    window.addEventListener('scroll', throttledScroll);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('scroll', throttledScroll);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      clearTimeout(scrollTimeout);
-    };
   }, []);
 
   // Debounce search untuk performance
@@ -173,9 +128,15 @@ const Index = () => {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate initial load (will be instant after first render)
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleSearchClear = useCallback(() => setSearchQuery(''), []);
+
+  // Quick initial load
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 100);
+    const timer = setTimeout(() => setIsLoading(false), 50);
     return () => clearTimeout(timer);
   }, []);
 
@@ -227,12 +188,12 @@ const Index = () => {
               type="text"
               placeholder="Cari tools, apps..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-secondary/50 border border-border rounded-lg pl-8 sm:pl-10 pr-8 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors"
+              onChange={handleSearchChange}
+              className="w-full bg-secondary/50 border border-border rounded-lg pl-8 sm:pl-10 pr-8 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={handleSearchClear}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
               >
                 <X className="w-3 h-3" />
