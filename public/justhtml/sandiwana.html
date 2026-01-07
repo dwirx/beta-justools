@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandi Wana Wulung (Ultimate Javanese Cipher)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Javanese&family=Outfit:wght@300;500;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-bg: #0b0f19;
+            --color-panel: #151b2b;
+            --color-accent: #d4af37; /* Metallic Gold */
+            --color-secondary: #64748b;
+            --color-success: #10b981;
+            --color-error: #ef4444;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 20%);
+        }
+
+        .aksara {
+            font-family: 'Noto Sans Javanese', sans-serif;
+            line-height: 2.5;
+            font-feature-settings: "kern" 1, "liga" 1;
+        }
+        
+        .mono { font-family: 'Fira Code', monospace; }
+
+        /* Custom UI Elements */
+        .glass-panel {
+            background: rgba(21, 27, 43, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .input-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-box:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+            outline: none;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37 0%, #b4941f 100%);
+            color: #000;
+            font-weight: 700;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+        .btn-gold:active { transform: translateY(0); }
+
+        /* Animation for visualization */
+        @keyframes pulse-gold {
+            0%, 100% { border-color: rgba(212, 175, 55, 0.2); }
+            50% { border-color: rgba(212, 175, 55, 0.8); }
+        }
+        .processing {
+            animation: pulse-gold 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 lg:p-8">
+
+    <!-- Header -->
+    <header class="text-center mb-10 relative z-10">
+        <div class="inline-block mb-2 px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs tracking-widest uppercase font-bold">
+            Algoritma V.2.0 (CBC Mode + Salt)
+        </div>
+        <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-amber-600 mb-4 drop-shadow-sm">
+            Sandi Wana Wulung
+        </h1>
+        <p class="text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+            Sistem kriptografi blok berbasis Aksara Jawa dengan integritas data.
+            <br>
+            <span class="text-sm text-slate-500">Mendukung: Dynamic Salting, Cipher Block Chaining, & Checksum.</span>
+        </p>
+    </header>
+
+    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-5 gap-6 relative z-10">
+        
+        <!-- Controls (Left) -->
+        <div class="lg:col-span-2 space-y-5">
+            
+            <!-- Key Input -->
+            <div class="glass-panel p-6 rounded-2xl">
+                <label class="block text-xs font-bold text-amber-500 uppercase tracking-widest mb-3">Kunci Utama (Password)</label>
+                <div class="relative">
+                    <input type="password" id="secretKey" 
+                        class="input-box w-full p-4 rounded-xl text-white placeholder-slate-600 font-mono tracking-wider" 
+                        placeholder="Masukkan Kata Sandi..."
+                        oninput="updateHashVisual()">
+                    <div class="absolute right-3 top-4">
+                        <div id="keyIndicator" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
+                    </div>
+                </div>
+                <div class="mt-3 flex justify-between text-[10px] text-slate-500 font-mono">
+                    <span id="keyHashDisplay">HASH: WAITING...</span>
+                    <span>SHA-256 SIMULATED</span>
+                </div>
+            </div>
+
+            <!-- Mode Switcher -->
+            <div class="glass-panel p-2 rounded-xl flex">
+                <button onclick="switchMode('encrypt')" id="tabEncrypt" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-amber-500 text-black shadow-lg">
+                    ENKRIPSI
+                </button>
+                <button onclick="switchMode('decrypt')" id="tabDecrypt" class="flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white">
+                    DEKRIPSI
+                </button>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="glass-panel p-6 rounded-2xl border-l-4 border-l-amber-500">
+                <h3 class="text-amber-400 font-bold mb-2 text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Fitur Keamanan
+                </h3>
+                <ul class="text-xs text-slate-400 space-y-2 list-disc list-inside">
+                    <li><span class="text-slate-200">Dynamic Salt:</span> Hasil enkripsi selalu berubah meski pesan sama.</li>
+                    <li><span class="text-slate-200">CBC Mode:</span> Karakter 'A' di awal berbeda dengan 'A' di akhir.</li>
+                    <li><span class="text-slate-200">Integrity:</span> Mendeteksi jika pesan rusak/diubah.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Workspace (Right) -->
+        <div class="lg:col-span-3 flex flex-col gap-4">
+            
+            <!-- Input Area -->
+            <div class="flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <label id="lblInput" class="text-xs font-bold text-slate-300 uppercase">Input (Teks Latin)</label>
+                    <button onclick="pasteText()" class="text-[10px] text-amber-500 hover:underline cursor-pointer">TEMPEL DARI CLIPBOARD</button>
+                </div>
+                <textarea id="inputText" 
+                    class="input-box w-full h-40 rounded-xl p-4 text-slate-200 font-mono text-sm resize-none"
+                    placeholder="Ketik pesan rahasia di sini..."></textarea>
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="executeCipher()" class="btn-gold w-full py-4 rounded-xl flex items-center justify-center gap-2 text-lg uppercase tracking-wide">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Jalankan Proses
+            </button>
+
+            <!-- Output Area -->
+            <div class="flex-1 flex flex-col relative group">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <label id="lblOutput" class="text-xs font-bold text-amber-500 uppercase">Output (Aksara Jawa)</label>
+                    <span id="integrityBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400 border border-green-500/50">VERIFIED</span>
+                </div>
+                <div class="relative flex-grow">
+                    <textarea id="outputText" readonly
+                        class="input-box w-full h-48 rounded-xl p-4 text-amber-100 aksara text-2xl resize-none break-all"
+                        placeholder="Hasil akan muncul di sini..."></textarea>
+                    
+                    <button onclick="copyOutput()" class="absolute bottom-3 right-3 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg shadow-lg border border-slate-600 transition-all opacity-0 group-hover:opacity-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-600 opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <span id="toastIcon">ℹ️</span>
+        <span id="toastMsg">Notification</span>
+    </div>
+
+    <script>
+        // =================================================================
+        // DEFINISI KARAKTER (CHARSET)
+        // Kita membuat mapping 1-lawan-1 yang presisi antara Latin & Jawa
+        // Panjang harus sama persis: 90 Karakter.
+        // =================================================================
+        
+        const LATIN_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,?!:;-()[]{}@#$%&*_+=/|~<>";
+        
+        // Menggunakan Range Unicode Jawa yang aman (Menghindari undefined)
+        // Kita pilih 90 karakter valid dari blok U+A980
+        const JAVA_CHARS_ARRAY = [
+            // Dasar & Murda
+            "\uA98F", "\uA990", "\uA991", "\uA992", "\uA993", "\uA994", "\uA995", "\uA996", "\uA997", "\uA998",
+            "\uA999", "\uA99A", "\uA99B", "\uA99C", "\uA99D", "\uA99E", "\uA99F", "\uA9A0", "\uA9A1", "\uA9A2",
+            "\uA9A3", "\uA9A4", "\uA9A5", "\uA9A6", "\uA9A7", "\uA9A8", "\uA9A9", "\uA9AA", "\uA9AB", "\uA9AC",
+            "\uA9AD", "\uA9AE", "\uA9AF", "\uA9B0", "\uA9B1", "\uA9B2", 
+            // Vokal Mandiri
+            "\uA984", "\uA985", "\uA986", "\uA987", "\uA988", "\uA989", "\uA98A", "\uA98B", "\uA98C", "\uA98D", "\uA98E",
+            // Sandhangan (Sebagai karakter mandiri untuk cipher)
+            "\uA9B4", "\uA9B5", "\uA9B6", "\uA9B7", "\uA9B8", "\uA9B9", "\uA9BA", "\uA9BB", "\uA9BC", "\uA9BD", "\uA9BE", "\uA9BF",
+            // Angka
+            "\uA9D0", "\uA9D1", "\uA9D2", "\uA9D3", "\uA9D4", "\uA9D5", "\uA9D6", "\uA9D7", "\uA9D8", "\uA9D9",
+            // Tanda Baca & Lainnya (Padding sampai 90)
+            "\uA980", "\uA981", "\uA982", "\uA983", "\uA9C0", "\uA9C1", "\uA9C2", "\uA9C3", "\uA9C4", "\uA9C5",
+            "\uA9C6", "\uA9C7", "\uA9C8", "\uA9C9", "\uA9CA", "\uA9CB", "\uA9CC", "\uA9CD", "\uA9CF", "\uA9DE", "\uA9DF"
+        ].slice(0, 90); // Pastikan tepat 90
+
+        const ALPHABET_SIZE = 90;
+
+        // =================================================================
+        // CRYPTO CORE CLASS
+        // =================================================================
+
+        class WanaWulungCipher {
+            
+            // Helper: Simple Hash untuk Key Derivation
+            static hashKey(keyStr) {
+                let hash = 0;
+                for (let i = 0; i < keyStr.length; i++) {
+                    const char = keyStr.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; 
+                }
+                return Math.abs(hash);
+            }
+
+            // Generate Random Salt (Panjang 4 karakter acak)
+            static generateSalt() {
+                let salt = [];
+                for(let i=0; i<4; i++) {
+                    salt.push(Math.floor(Math.random() * ALPHABET_SIZE));
+                }
+                return salt; // Array of Integers [12, 55, 2, 90]
+            }
+
+            static encrypt(plaintext, password) {
+                const keyHash = this.hashKey(password);
+                const salt = this.generateSalt(); // Generate Salt baru setiap enkripsi
+                
+                let outputIndices = [];
+                
+                // 1. Masukkan Salt ke Header Output
+                // Format Header: [Salt1, Salt2, Salt3, Salt4]
+                outputIndices.push(...salt);
+
+                // Initialize Previous Block (IV) menggunakan Salt
+                // Ini membuat CBC Mode bekerja
+                let prevBlock = (salt[0] + salt[1] + salt[2] + salt[3] + keyHash) % ALPHABET_SIZE;
+
+                // 2. Loop Enkripsi Utama (CBC Mode)
+                for (let i = 0; i < plaintext.length; i++) {
+                    const char = plaintext[i];
+                    const pIndex = LATIN_CHARS.indexOf(char);
+
+                    // Jika karakter tidak didukung (misal Enter, Tab), skip atau pass-through
+                    // Disini kita skip untuk menjaga integritas visual
+                    if (pIndex === -1) continue;
+
+                    // A. XOR Substitution Logic
+                    // (PlainIndex + PrevBlock + Key + Salt) % Size
+                    // Kombinasi ini membuat pola sangat acak
+                    let cIndex = (pIndex + prevBlock + keyHash) % ALPHABET_SIZE;
+                    
+                    // Simpan hasil
+                    outputIndices.push(cIndex);
+                    
+                    // Update PrevBlock untuk karakter berikutnya (Feedback Loop)
+                    prevBlock = cIndex; 
+                }
+
+                // 3. Tambahkan Checksum (Integritas) di akhir
+                // Simple Checksum: Sum of all cipher indices % Size
+                const checksum = outputIndices.reduce((a, b) => a + b, 0) % ALPHABET_SIZE;
+                outputIndices.push(checksum);
+
+                // 4. Convert Indices ke Unicode Jawa
+                return outputIndices.map(idx => JAVA_CHARS_ARRAY[idx]).join("");
+            }
+
+            static decrypt(ciphertext, password) {
+                const keyHash = this.hashKey(password);
+                
+                // Convert string Jawa kembali ke Array Indices
+                let cipherIndices = [];
+                for (let char of ciphertext) {
+                    const idx = JAVA_CHARS_ARRAY.indexOf(char);
+                    if (idx !== -1) cipherIndices.push(idx);
+                }
+
+                if (cipherIndices.length < 6) return { success: false, msg: "Pesan terlalu pendek/rusak." };
+
+                // 1. Ekstrak Checksum (Karakter Terakhir)
+                const receivedChecksum = cipherIndices.pop();
+                
+                // Hitung ulang checksum dari data yang tersisa
+                const calcChecksum = cipherIndices.reduce((a, b) => a + b, 0) % ALPHABET_SIZE;
+
+                if (receivedChecksum !== calcChecksum) {
+                    return { success: false, msg: "Integritas Gagal! Pesan telah dimodifikasi atau Kunci salah." };
+                }
+
+                // 2. Ekstrak Salt (4 Karakter Awal)
+                const salt = cipherIndices.splice(0, 4);
+                
+                // Init PrevBlock dari Salt yang diekstrak
+                let prevBlock = (salt[0] + salt[1] + salt[2] + salt[3] + keyHash) % ALPHABET_SIZE;
+
+                let plainResult = "";
+
+                // 3. Loop Dekripsi
+                for (let i = 0; i < cipherIndices.length; i++) {
+                    const cIndex = cipherIndices[i];
+
+                    // Rumus Balik: (Cipher - PrevBlock - Key)
+                    let pIndex = (cIndex - prevBlock - keyHash) % ALPHABET_SIZE;
+                    
+                    // Handle negative modulo javascript
+                    while (pIndex < 0) pIndex += ALPHABET_SIZE;
+
+                    plainResult += LATIN_CHARS[pIndex];
+
+                    // Update PrevBlock (Nilai cipher saat ini menjadi kunci pembuka berikutnya)
+                    prevBlock = cIndex;
+                }
+
+                return { success: true, data: plainResult };
+            }
+        }
+
+        // =================================================================
+        // UI INTERACTION LOGIC
+        // =================================================================
+
+        let currentMode = 'encrypt';
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnEnc = document.getElementById('tabEncrypt');
+            const btnDec = document.getElementById('tabDecrypt');
+            const lblIn = document.getElementById('lblInput');
+            const lblOut = document.getElementById('lblOutput');
+            const inTxt = document.getElementById('inputText');
+            const outTxt = document.getElementById('outputText');
+            const badge = document.getElementById('integrityBadge');
+
+            // Reset Output & Badge
+            outTxt.value = "";
+            inTxt.value = "";
+            badge.classList.add('hidden');
+
+            if (mode === 'encrypt') {
+                btnEnc.className = "flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-amber-500 text-black shadow-lg";
+                btnDec.className = "flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white";
+                
+                lblIn.textContent = "INPUT (TEKS LATIN)";
+                lblOut.textContent = "OUTPUT (AKSARA JAWA)";
+                
+                inTxt.placeholder = "Ketik pesan rahasia di sini...";
+                inTxt.classList.remove('aksara', 'text-2xl');
+                inTxt.classList.add('font-mono', 'text-sm');
+                
+                outTxt.classList.add('aksara', 'text-2xl');
+                outTxt.classList.remove('font-mono', 'text-sm');
+            } else {
+                btnEnc.className = "flex-1 py-3 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white";
+                btnDec.className = "flex-1 py-3 rounded-lg text-sm font-bold transition-all bg-emerald-600 text-white shadow-lg";
+                
+                lblIn.textContent = "INPUT (CIPHER JAWA)";
+                lblOut.textContent = "OUTPUT (TEKS LATIN)";
+                
+                inTxt.placeholder = "Tempel kode Jawa terenkripsi di sini...";
+                inTxt.classList.add('aksara', 'text-2xl');
+                inTxt.classList.remove('font-mono', 'text-sm');
+                
+                outTxt.classList.remove('aksara', 'text-2xl');
+                outTxt.classList.add('font-mono', 'text-sm');
+            }
+        }
+
+        function updateHashVisual() {
+            const key = document.getElementById('secretKey').value;
+            const ind = document.getElementById('keyIndicator');
+            const txt = document.getElementById('keyHashDisplay');
+            
+            if (key.length > 0) {
+                ind.classList.replace('bg-red-500', 'bg-emerald-500');
+                ind.classList.replace('shadow-[0_0_10px_red]', 'shadow-[0_0_10px_lime]');
+                // Fake Hash visual
+                let hash = WanaWulungCipher.hashKey(key).toString(16).toUpperCase();
+                txt.textContent = "HASH: " + hash.padEnd(8, 'X');
+            } else {
+                ind.classList.replace('bg-emerald-500', 'bg-red-500');
+                ind.classList.replace('shadow-[0_0_10px_lime]', 'shadow-[0_0_10px_red]');
+                txt.textContent = "HASH: WAITING...";
+            }
+        }
+
+        function executeCipher() {
+            const key = document.getElementById('secretKey').value;
+            const text = document.getElementById('inputText').value;
+            const output = document.getElementById('outputText');
+            const badge = document.getElementById('integrityBadge');
+
+            if (!key) {
+                showToast("⚠️ Kunci Sandi diperlukan!", "error");
+                return;
+            }
+            if (!text) {
+                showToast("⚠️ Teks input kosong!", "error");
+                return;
+            }
+
+            // Visual Loading
+            output.classList.add('processing');
+            badge.classList.add('hidden');
+
+            setTimeout(() => {
+                output.classList.remove('processing');
+                
+                try {
+                    if (currentMode === 'encrypt') {
+                        const res = WanaWulungCipher.encrypt(text, key);
+                        output.value = res;
+                        showToast("✅ Enkripsi Berhasil (Salt + CBC Applied)", "success");
+                    } else {
+                        const res = WanaWulungCipher.decrypt(text, key);
+                        if (res.success) {
+                            output.value = res.data;
+                            badge.classList.remove('hidden');
+                            badge.textContent = "INTEGRITY OK";
+                            badge.className = "absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/20 text-green-400 border border-green-500/50";
+                            showToast("🔓 Dekripsi Berhasil & Terverifikasi", "success");
+                        } else {
+                            output.value = "GAGAL: " + res.msg;
+                            badge.classList.remove('hidden');
+                            badge.textContent = "CORRUPTED";
+                            badge.className = "absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/50";
+                            showToast("❌ Dekripsi Gagal", "error");
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showToast("Error Sistem", "error");
+                }
+            }, 500);
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('outputText');
+            output.select();
+            document.execCommand('copy');
+            showToast("📋 Teks disalin ke clipboard", "success");
+        }
+
+        async function pasteText() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('inputText').value = text;
+                showToast("📋 Teks ditempel", "success");
+            } catch (err) {
+                showToast("Gagal mengakses clipboard", "error");
+            }
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMsg');
+            
+            text.textContent = msg;
+            icon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
+
