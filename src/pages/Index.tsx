@@ -1,18 +1,18 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Search, Wrench, Atom, Globe } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Wrench, Atom, Globe, X, Wifi, WifiOff } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { UnifiedGrid } from '@/components/UnifiedGrid';
+import { GridSkeleton, StatsSkeleton } from '@/components/Skeleton';
+import { useDebounce, useNetworkStatus, useIsMobile } from '@/hooks/usePerformance';
 import {
   getAllItems,
   getTools,
   getTsxApps,
   getHtmlApps,
   getStats,
-  searchAllItems,
   type SectionId,
-  SECTIONS,
 } from '@/lib/unifiedRegistry';
 
 // Storage keys for state persistence
@@ -185,6 +185,18 @@ const Index = () => {
     };
   }, []);
 
+  // Debounce search untuk performance
+  const debouncedSearch = useDebounce(searchQuery, 150);
+  const { isOnline } = useNetworkStatus();
+  const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate initial load (will be instant after first render)
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const filteredItems = useMemo(() => {
     // Get items based on active tab
     let items = activeTab === 'all' ? getAllItems() :
@@ -192,9 +204,9 @@ const Index = () => {
                 activeTab === 'apps' ? getTsxApps() :
                 getHtmlApps();
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    // Apply search filter with debounced query
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       items = items.filter(item =>
         item.name.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q) ||
@@ -203,13 +215,31 @@ const Index = () => {
     }
 
     return items;
-  }, [activeTab, searchQuery]);
+  }, [activeTab, debouncedSearch]);
 
   const stats = getStats();
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Offline Indicator */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center"
+          >
+            <span className="text-amber-400 text-sm flex items-center justify-center gap-2">
+              <WifiOff className="w-4 h-4" />
+              Offline Mode - Semua masih berfungsi
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Hero />
 
       {/* Search & Tabs */}
@@ -233,10 +263,16 @@ const Index = () => {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground transition-colors"
               >
-                <span className="text-xs">×</span>
+                <X className="w-3 h-3" />
               </button>
+            )}
+            {/* Search Loading indicator */}
+            {searchQuery !== debouncedSearch && (
+              <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
             )}
           </div>
 
@@ -267,10 +303,18 @@ const Index = () => {
       </motion.div>
 
       {/* Grid */}
-      <UnifiedGrid
-        items={filteredItems}
-        emptyMessage="Tidak ada item yang cocok dengan pencarian."
-      />
+      {isLoading ? (
+        <section className="px-3 sm:px-6 pb-6 sm:pb-12">
+          <div className="max-w-6xl mx-auto">
+            <GridSkeleton count={isMobile ? 4 : 8} />
+          </div>
+        </section>
+      ) : (
+        <UnifiedGrid
+          items={filteredItems}
+          emptyMessage="Tidak ada item yang cocok dengan pencarian."
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-4 sm:py-8 px-4 sm:px-6 safe-bottom">
