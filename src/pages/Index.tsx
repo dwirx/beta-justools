@@ -1,10 +1,9 @@
-import { useState, useMemo, useEffect, useRef, useCallback, memo, Suspense } from 'react';
+import { useState, useMemo, useEffect, useRef, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Wrench, Atom, Globe, X, Wifi, WifiOff } from 'lucide-react';
+import { Search, Wrench, Atom, Globe, X, WifiOff } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { UnifiedGrid } from '@/components/UnifiedGrid';
-import { GridSkeleton, StatsSkeleton } from '@/components/Skeleton';
+import { GridSkeleton } from '@/components/Skeleton';
 import { useDebounce, useNetworkStatus, useIsMobile } from '@/hooks/usePerformance';
 import {
   getAllItems,
@@ -37,7 +36,7 @@ const TABS: { id: SectionId | 'all'; label: string; icon: React.ReactNode }[] = 
 // HERO COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Hero = () => {
+const Hero = memo(() => {
   const stats = getStats();
 
   const statItems = [
@@ -48,52 +47,35 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative py-4 sm:py-8 md:py-12 px-3 sm:px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-20" />
-      <div className="hidden sm:block absolute top-0 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-primary/20 rounded-full blur-3xl" />
-      <div className="hidden sm:block absolute bottom-0 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl" />
+    <section className="relative py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
+          <span className="gradient-text">All-in-One</span> Developer Hub
+        </h2>
+        <p className="text-[11px] xs:text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+          Tools, React Apps, HTML Apps — 100% lokal & privat
+        </p>
 
-      <div className="relative max-w-4xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="text-xl sm:text-3xl md:text-5xl font-bold mb-1.5 sm:mb-3">
-            <span className="gradient-text">All-in-One</span> Developer Hub
-          </h2>
-          <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-3 sm:mb-6 px-1">
-            Tools, React Apps, dan HTML Apps — semua siap pakai.
-            <span className="hidden sm:inline"><br />100% lokal, privasi terjamin.</span>
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-4 gap-1.5 sm:gap-3"
-        >
-          {statItems.map((stat, index) => (
-            <motion.div
+        <div className="grid grid-cols-4 gap-1.5 xs:gap-2 sm:gap-3">
+          {statItems.map((stat) => (
+            <div
               key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25 + index * 0.05 }}
-              className="stat-card py-2.5 sm:py-4"
+              className="bg-card/50 border border-border/50 rounded-xl py-2 xs:py-2.5 sm:py-3 px-1 text-center"
             >
-              <span className="text-base sm:text-2xl">{stat.icon}</span>
-              <span className={`text-lg sm:text-2xl md:text-3xl font-bold ${stat.color}`}>
+              <div className="text-sm xs:text-base sm:text-lg">{stat.icon}</div>
+              <div className={`text-base xs:text-lg sm:text-xl font-bold ${stat.color}`}>
                 {stat.value}
-              </span>
-              <span className="text-[10px] sm:text-sm text-muted-foreground">{stat.label}</span>
-            </motion.div>
+              </div>
+              <div className="text-[9px] xs:text-[10px] sm:text-xs text-muted-foreground">{stat.label}</div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
-};
+});
+
+Hero.displayName = 'Hero';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN INDEX PAGE
@@ -224,60 +206,42 @@ const Index = () => {
       <Header />
       
       {/* Offline Indicator */}
-      <AnimatePresence>
-        {!isOnline && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center"
-          >
-            <span className="text-amber-400 text-sm flex items-center justify-center gap-2">
-              <WifiOff className="w-4 h-4" />
-              Offline Mode - Semua masih berfungsi
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!isOnline && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-3 py-1.5 text-center">
+          <span className="text-amber-400 text-xs flex items-center justify-center gap-1.5">
+            <WifiOff className="w-3.5 h-3.5" />
+            Offline - Semua tetap berfungsi
+          </span>
+        </div>
+      )}
 
       <Hero />
 
       {/* Search & Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="px-3 sm:px-6 mb-4 sm:mb-6 sticky top-[52px] sm:top-[64px] z-40 bg-background/95 backdrop-blur-xl py-3 -mt-1 border-b border-border/30"
-      >
-        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
+      <div className="px-3 sm:px-4 md:px-6 mb-3 sm:mb-4 sticky top-[45px] sm:top-[52px] z-40 bg-background/98 backdrop-blur-lg py-2 sm:py-2.5 border-b border-border/30">
+        <div className="max-w-4xl mx-auto space-y-2 sm:space-y-2.5">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Cari tools, apps..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input pl-9 sm:pl-11 text-sm py-2 sm:py-3 rounded-xl"
+              className="w-full bg-secondary/50 border border-border rounded-lg pl-8 sm:pl-10 pr-8 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 text-muted-foreground transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
-            {/* Search Loading indicator */}
-            {searchQuery !== debouncedSearch && (
-              <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-              </div>
-            )}
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-center scrollbar-hide snap-x snap-mandatory">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-3 px-3 sm:mx-0 sm:px-0 sm:justify-center scrollbar-hide">
             {TABS.map((tab) => {
               const count = tab.id === 'all' ? stats.total :
                            tab.id === 'tools' ? stats.tools :
@@ -287,24 +251,25 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`filter-button whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2 flex items-center gap-1 sm:gap-1.5 snap-start min-w-fit active:scale-95 transition-all ${
-                    activeTab === tab.id ? 'active' : ''
+                  className={`flex items-center gap-1 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                    activeTab === tab.id 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
-                  <span className="sm:hidden">{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.icon}</span>
-                  <span>{tab.id === 'apps' ? <span className="sm:hidden">React</span> : null}{tab.id === 'apps' ? <span className="hidden sm:inline">{tab.label}</span> : tab.label}</span>
-                  <span className="text-[10px] opacity-60 tabular-nums">({count})</span>
+                  <span className="hidden xs:inline">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  <span className="text-[10px] opacity-70">({count})</span>
                 </button>
               );
             })}
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Grid */}
       {isLoading ? (
-        <section className="px-3 sm:px-6 pb-6 sm:pb-12">
+        <section className="px-3 sm:px-4 md:px-6 pb-4 sm:pb-6">
           <div className="max-w-6xl mx-auto">
             <GridSkeleton count={isMobile ? 4 : 8} />
           </div>
@@ -317,15 +282,11 @@ const Index = () => {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-4 sm:py-8 px-4 sm:px-6 safe-bottom">
-        <div className="max-w-6xl mx-auto text-center text-xs sm:text-sm text-muted-foreground">
-          <p className="hidden sm:block">Made with ❤️ — Semua berjalan lokal di browser. Tidak ada data yang dikirim ke server.</p>
-          <p className="sm:hidden">Made with ❤️ — 100% lokal & privat</p>
-          <p className="mt-1.5 sm:mt-2">
-            <span className="text-primary font-medium">{stats.total}</span> items
-            <span className="hidden sm:inline"> ({stats.tools} tools, {stats.tsxApps} react apps, {stats.htmlApps} html apps)</span>
-          </p>
-        </div>
+      <footer className="border-t border-border/50 py-3 sm:py-4 px-3 sm:px-4 text-center text-[10px] sm:text-xs text-muted-foreground">
+        <p>Made with ❤️ — 100% lokal & privat</p>
+        <p className="mt-1">
+          <span className="text-primary font-medium">{stats.total}</span> items
+        </p>
       </footer>
     </div>
   );
