@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VibeDevID v7 (Universal)</title>
+    
+    <!-- Core Libraries -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Styling & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#09090b', surface: '#121215', border: '#27272a', active: '#27272a' },
+                        brand: { primary: '#3b82f6', secondary: '#8b5cf6', success: '#10b981', warning: '#f59e0b', danger: '#ef4444' }
+                    },
+                    animation: { 'fade-in': 'fadeIn 0.2s ease-out', 'slide-up': 'slideUp 0.3s ease-out', 'slide-in': 'slideIn 0.3s ease-out' },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        slideUp: { '0%': { transform: 'translateY(10px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+                        slideIn: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Base Settings for Mobile Comfort */
+        html, body { height: 100%; overflow: hidden; background-color: #09090b; color: #e4e4e7; font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+        /* Code Block Styling */
+        .prose pre { background: #1a1b26 !important; border: 1px solid #2e2e3a; border-radius: 0.5rem; margin: 0.75rem 0; overflow: hidden; }
+        .code-header { background: #24283b; padding: 0.4rem 0.8rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2335; }
+        .prose code { color: #e2e8f0; font-family: monospace; font-size: 0.85em; }
+        .prose p { margin-bottom: 0.75rem; line-height: 1.6; }
+        .prose a { color: #3b82f6; text-decoration: none; border-bottom: 1px dashed #3b82f6; }
+        
+        /* Prevent iOS input zoom */
+        input, select, textarea { font-size: 16px !important; }
+    </style>
+</head>
+<body>
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- 1. CONFIGURATION & DATA ---
+        const MODEL_REGISTRY = {
+            'claude-sonnet-4-5': { name: 'Claude Sonnet 4.5', in: 3.00, out: 15.00, color: 'text-blue-400' },
+            'claude-sonnet-4-5-thinking': { name: 'Claude Sonnet 4.5 (Thinking)', in: 3.00, out: 15.00, color: 'text-purple-400' },
+            'claude-opus-4-5-thinking': { name: 'Claude Opus 4.5 (Thinking)', in: 15.00, out: 75.00, color: 'text-red-400' },
+            'gemini-3-pro-preview': { name: 'Gemini 3 Pro', in: 1.25, out: 5.00, color: 'text-blue-400' },
+            'gemini-3-flash-preview': { name: 'Gemini 3 Flash', in: 0.075, out: 0.30, color: 'text-orange-400' },
+            'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', in: 0.075, out: 0.30, color: 'text-green-400' },
+            'unknown': { name: 'Unknown Model', in: 0, out: 0, color: 'text-gray-400' }
+        };
+
+        const calculateCost = (modelId, promptT, compT) => {
+            const m = MODEL_REGISTRY[modelId] || MODEL_REGISTRY['unknown'];
+            const inCost = (promptT / 1_000_000) * m.in;
+            const outCost = (compT / 1_000_000) * m.out;
+            return { in: inCost, out: outCost, total: inCost + outCost };
+        };
+
+        // --- 2. STORAGE (IndexedDB) ---
+        const DB_NAME = 'VibeDevDB_v7';
+        const STORE_CHATS = 'chats';
+
+        const db = {
+            open: () => new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    if (!e.target.result.objectStoreNames.contains(STORE_CHATS)) 
+                        e.target.result.createObjectStore(STORE_CHATS, { keyPath: 'id' });
+                };
+                req.onsuccess = () => res(req.result);
+                req.onerror = () => rej(req.error);
+            }),
+            put: async (chat) => {
+                const d = await db.open();
+                return new Promise(res => {
+                    const tx = d.transaction(STORE_CHATS, 'readwrite');
+                    tx.objectStore(STORE_CHATS).put(chat);
+                    tx.oncomplete = () => res();
+                });
+            },
+            getAll: async () => {
+                const d = await db.open();
+                return new Promise(res => {
+                    const req = d.transaction(STORE_CHATS, 'readonly').objectStore(STORE_CHATS).getAll();
+                    req.onsuccess = () => res(req.result);
+                });
+            },
+            delete: async (id) => {
+                const d = await db.open();
+                return new Promise(res => {
+                    const tx = d.transaction(STORE_CHATS, 'readwrite');
+                    tx.objectStore(STORE_CHATS).delete(id);
+                    tx.oncomplete = () => res();
+                });
+            }
+        };
+
+        // --- 3. UI COMPONENTS ---
+
+        // Responsive Analytics Modal
+        const AnalyticsModal = ({ isOpen, onClose, chats }) => {
+            if (!isOpen) return null;
+
+            const stats = useMemo(() => {
+                const data = {};
+                chats.forEach(chat => {
+                    chat.messages.forEach(msg => {
+                        if (msg.role === 'assistant' && msg.usage && msg.modelUsed) {
+                            if (!data[msg.modelUsed]) data[msg.modelUsed] = { count: 0, inTokens: 0, outTokens: 0, cost: 0 };
+                            data[msg.modelUsed].count += 1;
+                            data[msg.modelUsed].inTokens += msg.usage.prompt_tokens;
+                            data[msg.modelUsed].outTokens += msg.usage.completion_tokens;
+                            data[msg.modelUsed].cost += (msg.costDetails?.total || 0);
+                        }
+                    });
+                });
+                return data;
+            }, [chats]);
+
+            const totalCost = Object.values(stats).reduce((acc, curr) => acc + curr.cost, 0);
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div className="bg-dark-surface border border-dark-border w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-dark-border flex justify-between items-center bg-dark-bg/50">
+                            <h2 className="font-bold text-white flex items-center gap-2"><i data-lucide="bar-chart-2" className="text-brand-primary"></i> Analytics</h2>
+                            <button onClick={onClose}><i data-lucide="x" className="w-5 h-5 text-gray-400"></i></button>
+                        </div>
+                        <div className="p-4 overflow-y-auto custom-scrollbar space-y-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                                    <div className="text-[10px] uppercase text-blue-400 font-bold">Total Cost</div>
+                                    <div className="text-xl font-mono font-bold text-white">${totalCost.toFixed(5)}</div>
+                                </div>
+                                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                                    <div className="text-[10px] uppercase text-purple-400 font-bold">Requests</div>
+                                    <div className="text-xl font-mono font-bold text-white">{Object.values(stats).reduce((acc,c) => acc+c.count,0)}</div>
+                                </div>
+                                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg col-span-2 md:col-span-1">
+                                    <div className="text-[10px] uppercase text-green-400 font-bold">Tokens</div>
+                                    <div className="text-xl font-mono font-bold text-white">{(Object.values(stats).reduce((acc,c) => acc+c.inTokens+c.outTokens,0)/1000).toFixed(1)}k</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase">Model Breakdown</h3>
+                                <div className="space-y-3">
+                                    {Object.entries(stats).map(([id, data]) => (
+                                        <div key={id} className="bg-dark-bg border border-dark-border p-3 rounded-lg">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={`text-xs font-bold ${MODEL_REGISTRY[id]?.color || 'text-gray-400'}`}>{MODEL_REGISTRY[id]?.name || id}</span>
+                                                <span className="text-xs font-mono font-bold">${data.cost.toFixed(5)}</span>
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 font-mono">
+                                                In: {data.inTokens.toLocaleString()} • Out: {data.outTokens.toLocaleString()} • {data.count} Reqs
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {Object.keys(stats).length === 0 && <div className="text-center text-gray-500 text-sm italic py-4">Belum ada data penggunaan.</div>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Markdown Renderer
+        const Markdown = ({ content }) => {
+            const ref = useRef(null);
+            useEffect(() => {
+                if(!ref.current) return;
+                ref.current.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+                ref.current.querySelectorAll('pre').forEach(pre => {
+                    if (pre.querySelector('.code-header')) return;
+                    const code = pre.querySelector('code');
+                    const header = document.createElement('div');
+                    header.className = 'code-header';
+                    header.innerHTML = `<div class="flex gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-red-500"></div><div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div><div class="w-2.5 h-2.5 rounded-full bg-green-500"></div></div><button class="text-[10px] text-gray-400 hover:text-white flex items-center gap-1 copy-btn">COPY</button>`;
+                    header.querySelector('.copy-btn').onclick = () => {
+                        navigator.clipboard.writeText(code.innerText);
+                        const btn = header.querySelector('.copy-btn'); btn.innerText = 'COPIED!';
+                        setTimeout(() => btn.innerText = 'COPY', 2000);
+                    };
+                    pre.insertBefore(header, code);
+                });
+            }, [content]);
+            return <div ref={ref} className="prose prose-invert max-w-none text-sm break-words" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />;
+        };
+
+        // Thinking Accordion
+        const Thinking = ({ text }) => {
+            const [open, setOpen] = useState(false);
+            return (
+                <div className="mb-3 rounded-lg border border-purple-500/20 bg-purple-900/10 overflow-hidden">
+                    <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-purple-400 uppercase tracking-wider bg-black/20 hover:bg-purple-500/10 transition-colors">
+                        <i data-lucide="brain-circuit" className="w-3.5 h-3.5"></i> Proses Berpikir
+                        <i data-lucide={open ? "chevron-up" : "chevron-down"} className="w-3.5 h-3.5 ml-auto"></i>
+                    </button>
+                    {open && <div className="p-3 bg-black/20 text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-64 overflow-y-auto custom-scrollbar">{text}</div>}
+                </div>
+            );
+        };
+
+        // Metadata Footer
+        const MessageFooter = ({ modelId, usage, cost }) => {
+            if (!usage || !cost) return null;
+            const m = MODEL_REGISTRY[modelId] || MODEL_REGISTRY['unknown'];
+            return (
+                <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono text-gray-500 select-none">
+                    <span className="flex items-center gap-1 text-gray-400"><i data-lucide="cpu" className="w-3 h-3"></i> {m.name}</span>
+                    <span title="In/Out Tokens">T: {usage.prompt_tokens} / {usage.completion_tokens}</span>
+                    <span className="ml-auto text-brand-success font-bold bg-brand-success/5 px-1.5 rounded border border-brand-success/10">${cost.total.toFixed(5)}</span>
+                </div>
+            );
+        };
+
+        // --- 4. MAIN APP LOGIC ---
+        const App = () => {
+            const [apiKey, setApiKey] = useState('');
+            const [model, setModel] = useState('claude-sonnet-4-5');
+            const [input, setInput] = useState('');
+            const [status, setStatus] = useState('idle');
+            const [messages, setMessages] = useState([]);
+            const [chatList, setChatList] = useState([]);
+            const [currChatId, setCurrChatId] = useState(null);
+            
+            // UI States
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            const [analyticsOpen, setAnalyticsOpen] = useState(false);
+            const [settingsOpen, setSettingsOpen] = useState(false);
+            
+            const bottomRef = useRef(null);
+            const textareaRef = useRef(null);
+
+            useEffect(() => {
+                const init = async () => {
+                    const chats = await db.getAll();
+                    chats.sort((a,b) => b.timestamp - a.timestamp);
+                    setChatList(chats);
+                    if(chats.length) loadChat(chats[0]); else createChat();
+                };
+                init();
+                const k = localStorage.getItem('vibe_key');
+                if(k) setApiKey(k);
+            }, []);
+
+            useEffect(() => { 
+                lucide.createIcons(); 
+                bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); 
+            }, [messages]);
+
+            // Auto-resize textarea
+            useEffect(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.style.height = 'auto';
+                    textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+                }
+            }, [input]);
+
+            const createChat = async () => {
+                const id = Date.now().toString();
+                const newC = { id, title: 'Chat Baru', messages: [{role:'system', content:'System ready.'}], timestamp: Date.now() };
+                await db.put(newC);
+                setChatList(prev => [newC, ...prev]);
+                loadChat(newC);
+            };
+
+            const loadChat = (chat) => {
+                setCurrChatId(chat.id);
+                setMessages(chat.messages);
+                setSidebarOpen(false); // Close sidebar on mobile select
+            };
+
+            const updateChat = async (msgs) => {
+                setMessages(msgs);
+                const title = msgs.find(m => m.role === 'user')?.content.slice(0, 30) || 'Chat Baru';
+                const updated = { id: currChatId, title, messages: msgs, timestamp: Date.now() };
+                await db.put(updated);
+                setChatList(prev => prev.map(c => c.id === currChatId ? updated : c));
+            };
+
+            const deleteChat = async (e, id) => {
+                e.stopPropagation();
+                if(!confirm('Hapus chat ini?')) return;
+                await db.delete(id);
+                const rem = chatList.filter(c => c.id !== id);
+                setChatList(rem);
+                if(currChatId === id) rem.length ? loadChat(rem[0]) : createChat();
+            };
+
+            const handleSend = async () => {
+                if(!input.trim() || !apiKey) { if(!apiKey) { setSidebarOpen(true); setSettingsOpen(true); } return; }
+                
+                const userMsg = { role: 'user', content: input };
+                const tempMsgs = [...messages, userMsg];
+                setMessages(tempMsgs);
+                setInput('');
+                setStatus('sending');
+
+                try {
+                    const res = await fetch('https://api.vibe-dev.web.id/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                        body: JSON.stringify({
+                            model: model,
+                            messages: tempMsgs.filter(m => m.role !== 'system').map(({role, content}) => ({role, content})),
+                            max_tokens: 8192, stream: false
+                        })
+                    });
+
+                    if(!res.ok) throw new Error((await res.json()).error?.message || 'API Error');
+
+                    const data = await res.json();
+                    const raw = data.choices[0].message.content;
+                    
+                    // Parse Thinking
+                    let thought = null, final = raw;
+                    const match = raw.match(/<thinking>([\s\S]*?)<\/thinking>/i);
+                    if(match) { thought = match[1].trim(); final = raw.replace(match[0], '').trim(); }
+
+                    const usage = data.usage || { prompt_tokens: Math.ceil(input.length/4), completion_tokens: Math.ceil(raw.length/4) };
+                    const costDetails = calculateCost(model, usage.prompt_tokens, usage.completion_tokens);
+
+                    const aiMsg = { role: 'assistant', content: final, thought, usage, costDetails, modelUsed: model };
+                    updateChat([...tempMsgs, aiMsg]);
+
+                } catch(e) {
+                    updateChat([...tempMsgs, { role: 'assistant', content: `Error: ${e.message}`, isError: true }]);
+                } finally {
+                    setStatus('idle');
+                }
+            };
+
+            // Calculate Session Cost
+            const sessionCost = useMemo(() => messages.reduce((acc, m) => acc + (m.costDetails?.total || 0), 0), [messages]);
+
+            return (
+                <div className="flex h-screen bg-dark-bg text-gray-200 overflow-hidden relative">
+                    <AnalyticsModal isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} chats={chatList} />
+
+                    {/* OVERLAY FOR MOBILE SIDEBAR */}
+                    {sidebarOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" onClick={() => setSidebarOpen(false)}></div>}
+
+                    {/* SIDEBAR (Responsive Drawer) */}
+                    <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-dark-surface border-r border-dark-border transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:flex flex-col flex-shrink-0 shadow-2xl md:shadow-none`}>
+                        <div className="p-4 border-b border-dark-border flex items-center justify-between">
+                            <h1 className="font-bold text-lg flex items-center gap-2 text-white"><span className="w-2 h-6 bg-brand-primary rounded-full"></span> VibeDev v7</h1>
+                            <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 p-1"><i data-lucide="x"></i></button>
+                        </div>
+                        
+                        <div className="p-3">
+                            <button onClick={createChat} className="w-full py-2.5 bg-brand-primary hover:bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+                                <i data-lucide="plus" className="w-4 h-4"></i> Chat Baru
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto px-3 custom-scrollbar space-y-1">
+                            {chatList.map(c => (
+                                <div key={c.id} onClick={() => loadChat(c)} className={`group flex justify-between items-center p-2.5 rounded-lg text-sm cursor-pointer border ${currChatId === c.id ? 'bg-dark-active border-dark-border text-white' : 'border-transparent text-gray-400 hover:bg-dark-active/50'}`}>
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <i data-lucide="message-square" className="w-3.5 h-3.5 flex-shrink-0"></i>
+                                        <span className="truncate">{c.title}</span>
+                                    </div>
+                                    <button onClick={(e) => deleteChat(e, c.id)} className="opacity-0 group-hover:opacity-100 hover:text-red-400 p-1"><i data-lucide="trash-2" className="w-3.5 h-3.5"></i></button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-4 border-t border-dark-border bg-dark-surface">
+                            <button onClick={() => setSettingsOpen(!settingsOpen)} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white transition-colors">
+                                <span className="flex items-center gap-2"><i data-lucide="settings" className="w-4 h-4"></i> Pengaturan</span>
+                                <i data-lucide="chevron-up" className={`w-4 h-4 transition-transform ${settingsOpen ? '' : 'rotate-180'}`}></i>
+                            </button>
+                            {settingsOpen && (
+                                <div className="mt-3 space-y-2 animate-fade-in p-2 bg-dark-bg/50 rounded border border-dark-border">
+                                    <div className="text-[10px] font-bold text-gray-500 uppercase">API Key</div>
+                                    <input type="password" value={apiKey} onChange={e => {setApiKey(e.target.value); localStorage.setItem('vibe_key', e.target.value)}} className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:border-brand-primary outline-none" placeholder="sk-..." />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* MAIN CHAT AREA */}
+                    <div className="flex-1 flex flex-col h-full relative min-w-0 bg-dark-bg">
+                        
+                        {/* NAVBAR */}
+                        <div className="h-14 md:h-16 border-b border-dark-border bg-dark-surface/90 backdrop-blur flex items-center justify-between px-3 md:px-5 flex-shrink-0 z-30">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-400 p-1"><i data-lucide="menu"></i></button>
+                                <div className="flex flex-col">
+                                    <select value={model} onChange={e => setModel(e.target.value)} className="bg-transparent text-sm font-bold text-white outline-none cursor-pointer hover:text-brand-primary transition-colors appearance-none pr-4">
+                                        {Object.entries(MODEL_REGISTRY).filter(([k]) => k !== 'unknown').map(([k, v]) => (
+                                            <option key={k} value={k} className="bg-dark-surface">{v.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="text-[10px] text-gray-500 font-mono hidden sm:block">
+                                        ${MODEL_REGISTRY[model]?.in}/M In • ${MODEL_REGISTRY[model]?.out}/M Out
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="hidden sm:flex flex-col items-end mr-2">
+                                    <span className="text-[10px] text-gray-500 uppercase font-bold">Session Cost</span>
+                                    <span className="text-xs font-mono font-bold text-brand-success">${sessionCost.toFixed(5)}</span>
+                                </div>
+                                <button onClick={() => setAnalyticsOpen(true)} className="p-2 bg-dark-active hover:bg-dark-border border border-dark-border rounded-lg transition-all text-gray-300 hover:text-white" title="Analytics">
+                                    <i data-lucide="bar-chart-2" className="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* MESSAGES (Scrollable) */}
+                        <div className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar scroll-smooth">
+                            <div className="max-w-4xl mx-auto space-y-6 pb-4">
+                                {messages.filter(m => m.role !== 'system').map((msg, idx) => (
+                                    <div key={idx} className={`flex gap-3 md:gap-4 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold shadow-md ${msg.role === 'user' ? 'bg-brand-primary text-white' : 'bg-dark-surface border border-dark-border text-gray-400'}`}>
+                                            {msg.role === 'user' ? 'U' : 'AI'}
+                                        </div>
+                                        <div className={`flex flex-col min-w-0 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                            <div className={`relative px-4 py-3 rounded-2xl shadow-sm border text-sm ${
+                                                msg.role === 'user' ? 'bg-brand-primary text-white border-brand-primary rounded-tr-sm' :
+                                                msg.isError ? 'bg-red-900/20 border-red-800 text-red-100 rounded-tl-sm' :
+                                                'bg-dark-surface border-dark-border text-gray-200 rounded-tl-sm'
+                                            }`}>
+                                                {msg.thought && <Thinking text={msg.thought} />}
+                                                {msg.role === 'user' ? (
+                                                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                                                ) : (
+                                                    <Markdown content={msg.content} />
+                                                )}
+                                                {msg.role === 'assistant' && !msg.isError && (
+                                                    <MessageFooter modelId={msg.modelUsed || model} usage={msg.usage} cost={msg.costDetails} />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {status === 'sending' && (
+                                    <div className="flex justify-center py-4 gap-1.5 opacity-50">
+                                        <div className="w-2 h-2 bg-brand-primary rounded-full animate-bounce"></div>
+                                        <div className="w-2 h-2 bg-brand-secondary rounded-full animate-bounce delay-75"></div>
+                                        <div className="w-2 h-2 bg-brand-success rounded-full animate-bounce delay-150"></div>
+                                    </div>
+                                )}
+                                <div ref={bottomRef} className="h-1"></div>
+                            </div>
+                        </div>
+
+                        {/* INPUT AREA (Sticky Footer) */}
+                        <div className="flex-shrink-0 bg-dark-bg/95 backdrop-blur border-t border-dark-border p-3 md:p-5 pb-safe">
+                            <div className="max-w-4xl mx-auto relative group">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                                    placeholder="Ketik pesan..."
+                                    className="w-full bg-dark-surface border border-dark-border rounded-xl pl-4 pr-12 py-3.5 text-base md:text-sm text-gray-200 placeholder-gray-500 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none resize-none shadow-lg transition-all"
+                                    rows="1"
+                                    style={{ maxHeight: '160px', overflowY: 'auto' }}
+                                    disabled={status === 'sending'}
+                                />
+                                <button 
+                                    onClick={handleSend}
+                                    disabled={status === 'sending' || !input.trim()}
+                                    className={`absolute right-2 bottom-2 p-2 rounded-lg transition-all duration-200 ${input.trim() ? 'bg-brand-primary text-white shadow-lg hover:scale-105 active:scale-95' : 'text-gray-600'}`}
+                                >
+                                    <i data-lucide="send" className="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
