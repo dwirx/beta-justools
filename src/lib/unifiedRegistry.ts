@@ -82,18 +82,26 @@ const toolToUnified = (tool: ToolMeta): UnifiedItem => ({
 });
 
 /** Convert AppMeta ke UnifiedItem */
-const appToUnified = (app: AppMeta): UnifiedItem => ({
-  id: app.id,
-  name: app.name,
-  description: app.description,
-  icon: app.icon || '📱',
-  url: getAppUrl(app),
-  type: app.type.startsWith('tsx') ? 'tsx-app' : 'html-app',
-  category: app.category,
-  tags: [app.category.toLowerCase(), app.type],
-  featured: app.featured || false,
-  source: 'app',
-});
+const appToUnified = (app: AppMeta): UnifiedItem => {
+  // HTML apps use wrapper with Back & Home header
+  const isHtml = app.type.startsWith('html');
+  const appIdWithoutPrefix = app.id.replace('html-', '').replace('tsx-', '');
+  
+  return {
+    id: app.id,
+    name: app.name,
+    description: app.description,
+    icon: app.icon || '📱',
+    // HTML apps → /html-app/:appId (with wrapper header)
+    // TSX apps → /apps/:appId
+    url: isHtml ? `/html-app/${appIdWithoutPrefix}` : getAppUrl(app),
+    type: isHtml ? 'html-app' : 'tsx-app',
+    category: app.category,
+    tags: [app.category.toLowerCase(), app.type],
+    featured: app.featured || false,
+    source: 'app',
+  };
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIFIED REGISTRY - Gabungkan semua

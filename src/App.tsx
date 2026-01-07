@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MyAppsPage from "./pages/MyAppsPage";
+import HtmlAppWrapper from "./pages/HtmlAppWrapper";
 
 // Import registries for dynamic routing
 import toolRegistry from "./lib/toolRegistry";
@@ -82,6 +83,9 @@ const App = () => (
                 element={<route.component />} 
               />
             ))}
+
+            {/* HTML App Wrapper - Apps with Back & Home header */}
+            <Route path="/html-app/:appId" element={<HtmlAppWrapper />} />
             
             {/* My Apps */}
             <Route path="/myapps" element={<MyAppsPage />} />

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, ExternalLink } from 'lucide-react';
+import { Star, ArrowRight } from 'lucide-react';
 import { UnifiedItem, getTypeBadge } from '@/lib/unifiedRegistry';
 
 interface UnifiedCardProps {
@@ -10,7 +10,6 @@ interface UnifiedCardProps {
 
 export const UnifiedCard = ({ item, index }: UnifiedCardProps) => {
   const badge = getTypeBadge(item.type);
-  const isExternal = item.type === 'html-app';
 
   const CardContent = () => (
     <>
@@ -23,7 +22,7 @@ export const UnifiedCard = ({ item, index }: UnifiedCardProps) => {
               <span className="hidden sm:inline">Featured</span>
             </span>
           )}
-          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       </div>
 
@@ -46,29 +45,20 @@ export const UnifiedCard = ({ item, index }: UnifiedCardProps) => {
     </>
   );
 
+  // Semua items sekarang menggunakan Link internal
+  // HTML apps sudah punya wrapper dengan header Back & Home
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 + index * 0.02 }}
     >
-      {isExternal ? (
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="tool-card group block h-full p-4 sm:p-5"
-        >
-          <CardContent />
-        </a>
-      ) : (
-        <Link
-          to={item.url}
-          className="tool-card group block h-full p-4 sm:p-5"
-        >
-          <CardContent />
-        </Link>
-      )}
+      <Link
+        to={item.url}
+        className="tool-card group block h-full p-4 sm:p-5"
+      >
+        <CardContent />
+      </Link>
     </motion.div>
   );
 };
