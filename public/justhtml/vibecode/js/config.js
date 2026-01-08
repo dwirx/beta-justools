@@ -9,7 +9,7 @@ const MODEL_REGISTRY = {
     'unknown': { name: 'Unknown Model', in: 0, out: 0, color: 'text-gray-400' }
 };
 
-// Default API Base URL - can be configured by user
+// Default API Base URL
 const DEFAULT_API_BASE_URL = 'https://api.vibe-dev.web.id/v1';
 
 // Get API Base URL from localStorage or use default
@@ -30,9 +30,39 @@ const calculateCost = (modelId, promptT, compT) => {
     return { in: inCost, out: outCost, total: inCost + outCost };
 };
 
+// Theme Management
+const getTheme = () => {
+    return localStorage.getItem('vibe_theme') || 'dark';
+};
+
+const setTheme = (theme) => {
+    localStorage.setItem('vibe_theme', theme);
+    document.documentElement.className = theme;
+};
+
+const toggleTheme = () => {
+    const current = getTheme();
+    const next = current === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    return next;
+};
+
+// Initialize theme on load
+const initTheme = () => {
+    const theme = getTheme();
+    document.documentElement.className = theme;
+};
+
 // Export for use in other modules
 window.MODEL_REGISTRY = MODEL_REGISTRY;
 window.DEFAULT_API_BASE_URL = DEFAULT_API_BASE_URL;
 window.getApiBaseUrl = getApiBaseUrl;
 window.setApiBaseUrl = setApiBaseUrl;
 window.calculateCost = calculateCost;
+window.getTheme = getTheme;
+window.setTheme = setTheme;
+window.toggleTheme = toggleTheme;
+window.initTheme = initTheme;
+
+// Auto init theme
+initTheme();

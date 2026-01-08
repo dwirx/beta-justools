@@ -16,9 +16,18 @@ const App = () => {
     const [analyticsOpen, setAnalyticsOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [chatActionsOpen, setChatActionsOpen] = useState(false);
+    const [theme, setThemeState] = useState(window.getTheme());
 
     const bottomRef = useRef(null);
     const textareaRef = useRef(null);
+
+    const handleToggleTheme = () => {
+        const newTheme = window.toggleTheme();
+        setThemeState(newTheme);
+    };
+
+    // Check if dark mode
+    const isDark = theme === 'dark';
 
     useEffect(() => {
         const init = async () => {
@@ -40,7 +49,7 @@ const App = () => {
     useEffect(() => {
         lucide.createIcons();
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, chatActionsOpen, analyticsOpen]);
+    }, [messages, chatActionsOpen, analyticsOpen, theme]);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -150,23 +159,24 @@ const App = () => {
     }, [chatList, currChatId]);
 
     return (
-        <div className="flex h-screen bg-dark-bg text-gray-200 overflow-hidden relative">
-            <window.AnalyticsModal isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} chats={chatList} />
+        <div className={`flex h-screen overflow-hidden relative transition-colors duration-300 ${isDark ? 'bg-dark-bg text-gray-200' : 'bg-light-bg text-stone-700'}`}>
+            <window.AnalyticsModal isOpen={analyticsOpen} onClose={() => setAnalyticsOpen(false)} chats={chatList} isDark={isDark} />
             <window.ChatActionsMenu
                 isOpen={chatActionsOpen}
                 onClose={() => setChatActionsOpen(false)}
                 chatTitle={currentChatTitle}
                 messages={messages}
+                isDark={isDark}
             />
 
             {/* OVERLAY FOR MOBILE SIDEBAR */}
             {sidebarOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" onClick={() => setSidebarOpen(false)}></div>}
 
             {/* SIDEBAR (Responsive Drawer) */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-dark-surface border-r border-dark-border transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:flex flex-col flex-shrink-0 shadow-2xl md:shadow-none`}>
-                <div className="p-4 border-b border-dark-border flex items-center justify-between">
-                    <h1 className="font-bold text-lg flex items-center gap-2 text-white"><span className="w-2 h-6 bg-brand-primary rounded-full"></span> VibeDev v7</h1>
-                    <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 p-1"><i data-lucide="x"></i></button>
+            <div className={`fixed inset-y-0 left-0 z-50 w-72 border-r transform transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static md:flex flex-col flex-shrink-0 shadow-2xl md:shadow-none ${isDark ? 'bg-dark-surface border-dark-border' : 'bg-light-surface border-light-border'}`}>
+                <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-dark-border' : 'border-light-border'}`}>
+                    <h1 className={`font-bold text-lg flex items-center gap-2 ${isDark ? 'text-white' : 'text-stone-800'}`}><span className="w-2 h-6 bg-brand-primary rounded-full"></span> VibeDev v7</h1>
+                    <button onClick={() => setSidebarOpen(false)} className={`md:hidden p-1 ${isDark ? 'text-gray-400' : 'text-stone-500'}`}><i data-lucide="x"></i></button>
                 </div>
 
                 <div className="p-3">
@@ -177,7 +187,7 @@ const App = () => {
 
                 <div className="flex-1 overflow-y-auto px-3 custom-scrollbar space-y-1">
                     {chatList.map(c => (
-                        <div key={c.id} onClick={() => loadChat(c)} className={`group flex justify-between items-center p-2.5 rounded-lg text-sm cursor-pointer border ${currChatId === c.id ? 'bg-dark-active border-dark-border text-white' : 'border-transparent text-gray-400 hover:bg-dark-active/50'}`}>
+                        <div key={c.id} onClick={() => loadChat(c)} className={`group flex justify-between items-center p-2.5 rounded-lg text-sm cursor-pointer border transition-colors ${currChatId === c.id ? (isDark ? 'bg-dark-active border-dark-border text-white' : 'bg-light-active border-light-border text-stone-800') : (isDark ? 'border-transparent text-gray-400 hover:bg-dark-active/50' : 'border-transparent text-stone-500 hover:bg-light-active')}`}>
                             <div className="flex items-center gap-2 overflow-hidden">
                                 <i data-lucide="message-square" className="w-3.5 h-3.5 flex-shrink-0"></i>
                                 <span className="truncate">{c.title}</span>
@@ -187,33 +197,47 @@ const App = () => {
                     ))}
                 </div>
 
-                <div className="p-4 border-t border-dark-border bg-dark-surface">
-                    <button onClick={() => setSettingsOpen(!settingsOpen)} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white transition-colors">
+                <div className={`p-4 border-t ${isDark ? 'border-dark-border bg-dark-surface' : 'border-light-border bg-light-surface'}`}>
+                    <button onClick={() => setSettingsOpen(!settingsOpen)} className={`flex items-center justify-between w-full text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-stone-500 hover:text-stone-800'}`}>
                         <span className="flex items-center gap-2"><i data-lucide="settings" className="w-4 h-4"></i> Pengaturan</span>
                         <i data-lucide="chevron-up" className={`w-4 h-4 transition-transform ${settingsOpen ? '' : 'rotate-180'}`}></i>
                     </button>
                     {settingsOpen && (
-                        <div className="mt-3 space-y-3 animate-fade-in p-2 bg-dark-bg/50 rounded border border-dark-border">
+                        <div className={`mt-3 space-y-3 animate-fade-in p-2 rounded border ${isDark ? 'bg-dark-bg/50 border-dark-border' : 'bg-light-active border-light-border'}`}>
                             <div>
-                                <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">API Key</div>
+                                <div className={`text-[10px] font-bold uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-stone-500'}`}>API Key</div>
                                 <input
                                     type="password"
                                     value={apiKey}
                                     onChange={e => { setApiKey(e.target.value); localStorage.setItem('vibe_key', e.target.value) }}
-                                    className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:border-brand-primary outline-none"
+                                    className={`w-full rounded px-2 py-1.5 text-xs focus:border-brand-primary outline-none ${isDark ? 'bg-dark-bg border border-dark-border text-white' : 'bg-white border border-light-border text-stone-800'}`}
                                     placeholder="sk-..."
                                 />
                             </div>
                             <div>
-                                <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Base URL API</div>
+                                <div className={`text-[10px] font-bold uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-stone-500'}`}>Base URL API</div>
                                 <input
                                     type="text"
                                     value={apiBaseUrl}
                                     onChange={e => handleApiBaseUrlChange(e.target.value)}
-                                    className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:border-brand-primary outline-none"
+                                    className={`w-full rounded px-2 py-1.5 text-xs focus:border-brand-primary outline-none ${isDark ? 'bg-dark-bg border border-dark-border text-white' : 'bg-white border border-light-border text-stone-800'}`}
                                     placeholder={window.DEFAULT_API_BASE_URL}
                                 />
-                                <div className="text-[9px] text-gray-600 mt-1">Default: {window.DEFAULT_API_BASE_URL}</div>
+                                <div className={`text-[9px] mt-1 ${isDark ? 'text-gray-600' : 'text-stone-400'}`}>Default: {window.DEFAULT_API_BASE_URL}</div>
+                            </div>
+                            {/* Theme Toggle */}
+                            <div>
+                                <div className={`text-[10px] font-bold uppercase mb-1 ${isDark ? 'text-gray-500' : 'text-stone-500'}`}>Theme</div>
+                                <button
+                                    onClick={handleToggleTheme}
+                                    className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${isDark ? 'bg-dark-bg border border-dark-border text-white hover:border-brand-primary' : 'bg-white border border-light-border text-stone-800 hover:border-brand-primary'}`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <i data-lucide={isDark ? 'moon' : 'sun'} className="w-3.5 h-3.5"></i>
+                                        {isDark ? 'Dark Mode' : 'Light Mode'}
+                                    </span>
+                                    <i data-lucide="refresh-cw" className="w-3 h-3"></i>
+                                </button>
                             </div>
                         </div>
                     )}
@@ -221,77 +245,61 @@ const App = () => {
             </div>
 
             {/* MAIN CHAT AREA */}
-            <div className="flex-1 flex flex-col h-full relative min-w-0 bg-dark-bg">
+            <div className={`flex-1 flex flex-col h-full relative min-w-0 ${isDark ? 'bg-dark-bg' : 'bg-light-bg'}`}>
 
-                {/* NAVBAR */}
-                <div className="h-14 md:h-16 border-b border-dark-border bg-dark-surface/90 backdrop-blur flex items-center justify-between px-3 md:px-5 flex-shrink-0 z-30">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-400 p-1"><i data-lucide="menu"></i></button>
-                        <div className="flex flex-col">
-                            <select value={model} onChange={e => setModel(e.target.value)} className="bg-transparent text-sm font-bold text-white outline-none cursor-pointer hover:text-brand-primary transition-colors appearance-none pr-4">
-                                {Object.entries(window.MODEL_REGISTRY).filter(([k]) => k !== 'unknown').map(([k, v]) => (
-                                    <option key={k} value={k} className="bg-dark-surface">{v.name}</option>
-                                ))}
-                            </select>
-                            <div className="text-[10px] text-gray-500 font-mono hidden sm:block">
-                                ${window.MODEL_REGISTRY[model]?.in}/M In • ${window.MODEL_REGISTRY[model]?.out}/M Out
-                            </div>
-                        </div>
+                {/* COMPACT NAVBAR */}
+                <div className={`h-12 border-b backdrop-blur flex items-center justify-between px-3 md:px-4 flex-shrink-0 z-30 ${isDark ? 'border-dark-border bg-dark-surface/90' : 'border-light-border bg-light-surface/90'}`}>
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <button onClick={() => setSidebarOpen(true)} className={`md:hidden p-1 ${isDark ? 'text-gray-400' : 'text-stone-500'}`}><i data-lucide="menu"></i></button>
+                        <select value={model} onChange={e => setModel(e.target.value)} className={`bg-transparent text-sm font-semibold outline-none cursor-pointer hover:text-brand-primary transition-colors appearance-none ${isDark ? 'text-white' : 'text-stone-800'}`}>
+                            {Object.entries(window.MODEL_REGISTRY).filter(([k]) => k !== 'unknown').map(([k, v]) => (
+                                <option key={k} value={k} className={isDark ? 'bg-dark-surface' : 'bg-light-surface'}>{v.name}</option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="hidden sm:flex flex-col items-end mr-2">
-                            <span className="text-[10px] text-gray-500 uppercase font-bold">Session Cost</span>
-                            <span className="text-xs font-mono font-bold text-brand-success">${sessionCost.toFixed(5)}</span>
-                        </div>
-                        <button onClick={() => setChatActionsOpen(true)} className="p-2 bg-dark-active hover:bg-dark-border border border-dark-border rounded-lg transition-all text-gray-300 hover:text-white" title="Export Chat">
-                            <i data-lucide="download" className="w-5 h-5"></i>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold text-brand-success hidden sm:block">${sessionCost.toFixed(4)}</span>
+                        <button onClick={() => setChatActionsOpen(true)} className={`p-1.5 rounded-lg transition-all ${isDark ? 'text-gray-400 hover:text-white hover:bg-dark-active' : 'text-stone-500 hover:text-stone-800 hover:bg-light-active'}`} title="Export">
+                            <i data-lucide="download" className="w-4 h-4"></i>
                         </button>
-                        <button onClick={() => setAnalyticsOpen(true)} className="p-2 bg-dark-active hover:bg-dark-border border border-dark-border rounded-lg transition-all text-gray-300 hover:text-white" title="Analytics">
-                            <i data-lucide="bar-chart-2" className="w-5 h-5"></i>
+                        <button onClick={() => setAnalyticsOpen(true)} className={`p-1.5 rounded-lg transition-all ${isDark ? 'text-gray-400 hover:text-white hover:bg-dark-active' : 'text-stone-500 hover:text-stone-800 hover:bg-light-active'}`} title="Analytics">
+                            <i data-lucide="bar-chart-2" className="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
 
                 {/* MESSAGES (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar scroll-smooth">
-                    <div className="max-w-4xl mx-auto space-y-6 pb-4">
+                <div className="flex-1 overflow-y-auto p-3 md:p-5 custom-scrollbar scroll-smooth">
+                    <div className="max-w-3xl mx-auto space-y-4 pb-4">
                         {messages.filter(m => m.role !== 'system').map((msg, idx) => (
-                            <div key={idx} className={`flex gap-3 md:gap-4 animate-slide-up group ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold shadow-md ${msg.role === 'user' ? 'bg-brand-primary text-white' : 'bg-dark-surface border border-dark-border text-gray-400'}`}>
+                            <div key={idx} className={`flex gap-2.5 animate-slide-up group ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${msg.role === 'user' ? 'bg-brand-primary text-white' : (isDark ? 'bg-dark-active text-gray-400' : 'bg-light-active text-stone-500')}`}>
                                     {msg.role === 'user' ? 'U' : 'AI'}
                                 </div>
-                                <div className={`flex flex-col min-w-0 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                    <div className={`relative w-full px-4 py-3 rounded-2xl shadow-sm border text-sm ${msg.role === 'user' ? 'bg-brand-primary text-white border-brand-primary rounded-tr-sm' :
-                                            msg.isError ? 'bg-red-900/20 border-red-800 text-red-100 rounded-tl-sm' :
-                                                'bg-dark-surface border-dark-border text-gray-200 rounded-tl-sm'
+                                <div className={`flex flex-col min-w-0 max-w-[88%] md:max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`relative w-full px-3.5 py-2.5 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-brand-primary text-white rounded-tr-sm' :
+                                            msg.isError ? 'bg-red-900/20 border border-red-800 text-red-100 rounded-tl-sm' :
+                                                (isDark ? 'bg-dark-surface border border-dark-border text-gray-200 rounded-tl-sm' : 'bg-light-surface border border-light-border text-stone-700 rounded-tl-sm')
                                         }`}>
                                         {msg.thought && <window.Thinking text={msg.thought} />}
                                         {msg.role === 'user' ? (
                                             <div className="whitespace-pre-wrap">{msg.content}</div>
                                         ) : (
-                                            <window.Markdown content={msg.content} />
+                                            <window.Markdown content={msg.content} isDark={isDark} />
                                         )}
-
-                                        {/* Footer with metadata and copy */}
-                                        <div className={`mt-2 pt-2 border-t ${msg.role === 'user' ? 'border-white/10' : 'border-white/5'} flex items-center justify-between gap-2 flex-wrap`}>
-                                            {msg.role === 'assistant' && !msg.isError && msg.usage && msg.costDetails ? (
-                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-mono text-gray-500 select-none">
-                                                    <span className="flex items-center gap-1 text-gray-400">
-                                                        <i data-lucide="cpu" className="w-3 h-3"></i>
-                                                        {window.MODEL_REGISTRY[msg.modelUsed]?.name || msg.modelUsed}
-                                                    </span>
-                                                    <span>T: {msg.usage.prompt_tokens} / {msg.usage.completion_tokens}</span>
-                                                    <span className="text-brand-success font-bold">${msg.costDetails.total.toFixed(5)}</span>
-                                                </div>
-                                            ) : <div></div>}
-                                            <window.MessageCopyButton message={msg} isUserMessage={msg.role === 'user'} />
-                                        </div>
+                                    </div>
+                                    {/* Minimal action row */}
+                                    <div className={`flex items-center gap-2 mt-1 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                        <window.MessageCopyButton message={msg} isUserMessage={msg.role === 'user'} isDark={isDark} />
+                                        {msg.role === 'assistant' && msg.costDetails && (
+                                            <span className={`text-[9px] font-mono ${isDark ? 'text-gray-600' : 'text-stone-400'}`}>${msg.costDetails.total.toFixed(5)}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         ))}
                         {status === 'sending' && (
-                            <div className="flex justify-center py-4 gap-1.5 opacity-50">
+                            <div className="flex justify-center py-3 gap-1.5 opacity-50">
                                 <div className="w-2 h-2 bg-brand-primary rounded-full animate-bounce"></div>
                                 <div className="w-2 h-2 bg-brand-secondary rounded-full animate-bounce delay-75"></div>
                                 <div className="w-2 h-2 bg-brand-success rounded-full animate-bounce delay-150"></div>
@@ -301,26 +309,26 @@ const App = () => {
                     </div>
                 </div>
 
-                {/* INPUT AREA (Sticky Footer) */}
-                <div className="flex-shrink-0 bg-dark-bg/95 backdrop-blur border-t border-dark-border p-3 md:p-5 pb-safe">
-                    <div className="max-w-4xl mx-auto relative group">
+                {/* COMPACT INPUT AREA */}
+                <div className={`flex-shrink-0 border-t p-2 md:p-3 ${isDark ? 'bg-dark-bg border-dark-border' : 'bg-light-bg border-light-border'}`}>
+                    <div className="max-w-3xl mx-auto relative">
                         <textarea
                             ref={textareaRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                             placeholder="Ketik pesan..."
-                            className="w-full bg-dark-surface border border-dark-border rounded-xl pl-4 pr-12 py-3.5 text-base md:text-sm text-gray-200 placeholder-gray-500 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none resize-none shadow-lg transition-all"
+                            className={`w-full rounded-xl pl-4 pr-11 py-3 text-sm outline-none resize-none transition-all border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary ${isDark ? 'bg-dark-surface border-dark-border text-gray-200 placeholder-gray-500' : 'bg-light-surface border-light-border text-stone-700 placeholder-stone-400'}`}
                             rows="1"
-                            style={{ maxHeight: '160px', overflowY: 'auto' }}
+                            style={{ maxHeight: '140px', overflowY: 'auto' }}
                             disabled={status === 'sending'}
                         />
                         <button
                             onClick={handleSend}
                             disabled={status === 'sending' || !input.trim()}
-                            className={`absolute right-2 bottom-2 p-2 rounded-lg transition-all duration-200 ${input.trim() ? 'bg-brand-primary text-white shadow-lg hover:scale-105 active:scale-95' : 'text-gray-600'}`}
+                            className={`absolute right-2 bottom-2 p-2 rounded-lg transition-all duration-200 ${input.trim() ? 'bg-brand-primary text-white hover:scale-105 active:scale-95' : (isDark ? 'text-gray-600' : 'text-stone-400')}`}
                         >
-                            <i data-lucide="send" className="w-5 h-5"></i>
+                            <i data-lucide="send" className="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>

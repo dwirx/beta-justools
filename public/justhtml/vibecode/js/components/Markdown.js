@@ -1,7 +1,7 @@
 const { useRef, useEffect } = React;
 
 // Markdown Renderer Component
-const Markdown = ({ content }) => {
+const Markdown = ({ content, isDark = true }) => {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -24,7 +24,7 @@ const Markdown = ({ content }) => {
         });
     }, [content]);
 
-    return <div ref={ref} className="prose prose-invert max-w-none text-sm break-words" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />;
+    return <div ref={ref} className={`prose max-w-none text-sm break-words ${isDark ? 'prose-invert' : ''}`} dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />;
 };
 
 // Export for use in app

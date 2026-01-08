@@ -3,12 +3,21 @@ tailwind.config = {
     theme: {
         extend: {
             colors: {
+                // Dark mode colors
                 dark: {
                     bg: '#09090b',
                     surface: '#121215',
                     border: '#27272a',
                     active: '#27272a'
                 },
+                // Light mode colors (warm tones)
+                light: {
+                    bg: '#faf8f5',
+                    surface: '#fffefa',
+                    border: '#e8e4dd',
+                    active: '#f5f2ed'
+                },
+                // Brand colors
                 brand: {
                     primary: '#3b82f6',
                     secondary: '#8b5cf6',
