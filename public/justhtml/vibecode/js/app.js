@@ -17,9 +17,13 @@ const App = () => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [chatActionsOpen, setChatActionsOpen] = useState(false);
     const [theme, setThemeState] = useState(window.getTheme());
+    const [showScrollButtons, setShowScrollButtons] = useState(true);
+    const [canScrollUp, setCanScrollUp] = useState(false);
+    const [canScrollDown, setCanScrollDown] = useState(false);
 
     const bottomRef = useRef(null);
     const textareaRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
     const handleToggleTheme = () => {
         const newTheme = window.toggleTheme();
@@ -58,6 +62,33 @@ const App = () => {
             textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
         }
     }, [input]);
+
+    // Handle scroll state
+    const handleScroll = () => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        setCanScrollUp(scrollTop > 100);
+        setCanScrollDown(scrollTop < scrollHeight - clientHeight - 100);
+    };
+
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial check
+            return () => container.removeEventListener('scroll', handleScroll);
+        }
+    }, [messages]);
+
+    const scrollToTop = () => {
+        messagesContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const scrollToBottom = () => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const createChat = async () => {
         const id = Date.now().toString();
@@ -269,7 +300,7 @@ const App = () => {
                 </div>
 
                 {/* MESSAGES (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-3 md:p-5 custom-scrollbar scroll-smooth">
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 md:p-5 custom-scrollbar scroll-smooth relative">
                     <div className="max-w-3xl mx-auto space-y-4 pb-4">
                         {messages.filter(m => m.role !== 'system').map((msg, idx) => (
                             <div key={idx} className={`flex gap-2.5 animate-slide-up group ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
@@ -307,6 +338,48 @@ const App = () => {
                         )}
                         <div ref={bottomRef} className="h-1"></div>
                     </div>
+
+                    {/* Floating Scroll Buttons */}
+                    {showScrollButtons && (canScrollUp || canScrollDown) && (
+                        <div className={`fixed right-4 md:right-8 bottom-24 flex flex-col gap-2 z-20 transition-opacity duration-300`}>
+                            {canScrollUp && (
+                                <button
+                                    onClick={scrollToTop}
+                                    className={`p-2 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'bg-dark-surface border border-dark-border text-gray-300 hover:text-white' : 'bg-light-surface border border-light-border text-stone-500 hover:text-stone-800'}`}
+                                    title="Scroll ke atas"
+                                >
+                                    <i data-lucide="chevron-up" className="w-4 h-4"></i>
+                                </button>
+                            )}
+                            {canScrollDown && (
+                                <button
+                                    onClick={scrollToBottom}
+                                    className={`p-2 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${isDark ? 'bg-dark-surface border border-dark-border text-gray-300 hover:text-white' : 'bg-light-surface border border-light-border text-stone-500 hover:text-stone-800'}`}
+                                    title="Scroll ke bawah"
+                                >
+                                    <i data-lucide="chevron-down" className="w-4 h-4"></i>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowScrollButtons(false)}
+                                className={`p-1.5 rounded-full transition-all hover:scale-110 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-stone-400 hover:text-stone-600'}`}
+                                title="Sembunyikan"
+                            >
+                                <i data-lucide="x" className="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Show scroll buttons toggle (when hidden) */}
+                    {!showScrollButtons && (
+                        <button
+                            onClick={() => setShowScrollButtons(true)}
+                            className={`fixed right-4 md:right-8 bottom-24 p-2 rounded-full shadow-lg transition-all hover:scale-110 z-20 ${isDark ? 'bg-dark-surface border border-dark-border text-gray-400 hover:text-white' : 'bg-light-surface border border-light-border text-stone-400 hover:text-stone-800'}`}
+                            title="Tampilkan tombol scroll"
+                        >
+                            <i data-lucide="chevrons-up-down" className="w-4 h-4"></i>
+                        </button>
+                    )}
                 </div>
 
                 {/* COMPACT INPUT AREA */}
