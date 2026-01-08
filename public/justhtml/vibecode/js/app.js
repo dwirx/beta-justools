@@ -260,8 +260,8 @@ const App = () => {
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold shadow-md ${msg.role === 'user' ? 'bg-brand-primary text-white' : 'bg-dark-surface border border-dark-border text-gray-400'}`}>
                                     {msg.role === 'user' ? 'U' : 'AI'}
                                 </div>
-                                <div className={`flex flex-col min-w-0 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'} relative`}>
-                                    <div className={`relative px-4 py-3 pb-3 rounded-2xl shadow-sm border text-sm ${msg.role === 'user' ? 'bg-brand-primary text-white border-brand-primary rounded-tr-sm' :
+                                <div className={`flex flex-col min-w-0 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`relative w-full px-4 py-3 rounded-2xl shadow-sm border text-sm ${msg.role === 'user' ? 'bg-brand-primary text-white border-brand-primary rounded-tr-sm' :
                                             msg.isError ? 'bg-red-900/20 border-red-800 text-red-100 rounded-tl-sm' :
                                                 'bg-dark-surface border-dark-border text-gray-200 rounded-tl-sm'
                                         }`}>
@@ -271,14 +271,21 @@ const App = () => {
                                         ) : (
                                             <window.Markdown content={msg.content} />
                                         )}
-                                        {msg.role === 'assistant' && !msg.isError && (
-                                            <window.MessageFooter modelId={msg.modelUsed || model} usage={msg.usage} cost={msg.costDetails} />
-                                        )}
-                                    </div>
 
-                                    {/* Copy Button - Positioned below message bubble */}
-                                    <div className={`mt-2 ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
-                                        <window.MessageCopyButton message={msg} />
+                                        {/* Footer with metadata and copy */}
+                                        <div className={`mt-2 pt-2 border-t ${msg.role === 'user' ? 'border-white/10' : 'border-white/5'} flex items-center justify-between gap-2 flex-wrap`}>
+                                            {msg.role === 'assistant' && !msg.isError && msg.usage && msg.costDetails ? (
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-mono text-gray-500 select-none">
+                                                    <span className="flex items-center gap-1 text-gray-400">
+                                                        <i data-lucide="cpu" className="w-3 h-3"></i>
+                                                        {window.MODEL_REGISTRY[msg.modelUsed]?.name || msg.modelUsed}
+                                                    </span>
+                                                    <span>T: {msg.usage.prompt_tokens} / {msg.usage.completion_tokens}</span>
+                                                    <span className="text-brand-success font-bold">${msg.costDetails.total.toFixed(5)}</span>
+                                                </div>
+                                            ) : <div></div>}
+                                            <window.MessageCopyButton message={msg} isUserMessage={msg.role === 'user'} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

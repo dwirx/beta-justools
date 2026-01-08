@@ -1,9 +1,8 @@
 const { useState } = React;
 
-// Individual Message Copy Button Component
-const MessageCopyButton = ({ message, className = '' }) => {
+// Individual Message Copy Button Component - Minimal & Elegant
+const MessageCopyButton = ({ message, isUserMessage = false, className = '' }) => {
     const [copied, setCopied] = useState(false);
-    const [animating, setAnimating] = useState(false);
 
     const handleCopy = async () => {
         const textToCopy = message.content;
@@ -11,10 +10,7 @@ const MessageCopyButton = ({ message, className = '' }) => {
 
         if (success) {
             setCopied(true);
-            setAnimating(true);
             window.showToast('Copied!', 'success');
-
-            setTimeout(() => setAnimating(false), 300);
             setTimeout(() => setCopied(false), 2000);
         }
     };
@@ -23,47 +19,26 @@ const MessageCopyButton = ({ message, className = '' }) => {
         <button
             onClick={handleCopy}
             className={`
-                group/btn
-                inline-flex
-                opacity-100 md:opacity-0 md:group-hover:opacity-100
-                transition-all duration-300 ease-out
-                px-2.5 py-1.5
-                rounded-lg
-                items-center gap-1.5
-                text-xs font-medium
+                inline-flex items-center gap-1
+                px-2 py-0.5
+                text-[11px] font-medium
+                rounded
+                transition-all duration-200
                 ${copied
-                    ? 'bg-gradient-to-r from-emerald-500/90 to-teal-500/90 hover:from-emerald-600 hover:to-teal-600'
-                    : 'bg-gradient-to-r from-blue-500/90 to-indigo-600/90 hover:from-blue-600 hover:to-indigo-700'
+                    ? (isUserMessage
+                        ? 'text-white/90 bg-white/20'
+                        : 'text-green-400 bg-green-500/10')
+                    : (isUserMessage
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-gray-500 hover:text-gray-300 hover:bg-white/5')
                 }
-                ${animating ? 'copy-success-animation' : ''}
-                shadow-md hover:shadow-lg
                 active:scale-95
-                text-white
-                backdrop-blur-sm
-                border border-white/10
-                overflow-hidden
-                relative
                 ${className}
             `}
-            title={copied ? 'Copied!' : 'Copy message'}
+            title={copied ? 'Copied!' : 'Copy'}
         >
-            {/* Shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></div>
-
-            {/* Content */}
-            <div className="relative flex items-center gap-1.5">
-                {copied ? (
-                    <>
-                        <i data-lucide="check" className="w-3.5 h-3.5 copy-success-slide"></i>
-                        <span>Copied</span>
-                    </>
-                ) : (
-                    <>
-                        <i data-lucide="copy" className="w-3.5 h-3.5"></i>
-                        <span>Copy</span>
-                    </>
-                )}
-            </div>
+            <i data-lucide={copied ? "check" : "copy"} className="w-3 h-3"></i>
+            <span>{copied ? 'Copied' : 'Copy'}</span>
         </button>
     );
 };
