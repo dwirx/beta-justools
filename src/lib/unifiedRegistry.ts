@@ -36,6 +36,7 @@ export interface UnifiedItem {
   category: string;
   tags: string[];
   featured: boolean;
+  addedAt?: string;
   source: 'tool' | 'app';
 }
 
@@ -78,6 +79,7 @@ const toolToUnified = (tool: ToolMeta): UnifiedItem => ({
   category: tool.category,
   tags: tool.tags,
   featured: tool.featured || false,
+  addedAt: undefined,
   source: 'tool',
 });
 
@@ -99,6 +101,7 @@ const appToUnified = (app: AppMeta): UnifiedItem => {
     category: app.category,
     tags: [app.category.toLowerCase(), app.type],
     featured: app.featured || false,
+    addedAt: app.addedAt,
     source: 'app',
   };
 };

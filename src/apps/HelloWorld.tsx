@@ -16,6 +16,7 @@ export const appMeta = {
   category: 'Education' as const,
   icon: '👋',
   featured: true,
+  addedAt: '2024-02-10',
 };
 
 const HelloWorld = () => {

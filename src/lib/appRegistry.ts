@@ -32,6 +32,7 @@ export interface AppMeta {
   category: AppCategory;
   icon?: string;
   featured?: boolean;
+  addedAt?: string;
   component?: ComponentType;
 }
 
@@ -41,7 +42,29 @@ export interface TsxAppMeta {
   category?: AppCategory;
   icon?: string;
   featured?: boolean;
+  addedAt?: string;
 }
+
+interface TsxCustomization {
+  name?: string;
+  description?: string;
+  category?: AppCategory;
+  icon?: string;
+  featured?: boolean;
+  addedAt?: string;
+}
+
+const tsxCustomizations: Record<string, TsxCustomization> = {
+  'hello-world': {
+    addedAt: '2024-02-10',
+  },
+  'counter-app': {
+    addedAt: '2025-12-02',
+  },
+  'enigma-m5': {
+    addedAt: '2025-11-15',
+  },
+};
 
 // =============================================================
 // AUTO-DETECT TSX APPS dari src/apps/
@@ -80,16 +103,18 @@ const buildTsxApps = (): AppMeta[] => {
     const filename = path.split('/').pop()?.replace('.tsx', '') || 'unknown';
     const id = toKebabCase(filename);
     const name = toReadableName(filename);
+    const custom = tsxCustomizations[id] || {};
     
     apps.push({
       id: `tsx-${id}`,
-      name,
-      description: `Single TSX app`,
+      name: custom.name || name,
+      description: custom.description || `Single TSX app`,
       type: 'tsx-single',
       path: path,
-      category: 'Other',
-      icon: getRandomIcon(name), // Auto-generate icon!
-      featured: false,
+      category: custom.category || 'Other',
+      icon: custom.icon || getRandomIcon(name), // Auto-generate icon!
+      featured: custom.featured || false,
+      addedAt: custom.addedAt,
       component: lazy(importFn),
     });
   });
@@ -104,16 +129,18 @@ const buildTsxApps = (): AppMeta[] => {
     
     const id = toKebabCase(folderName);
     const name = toReadableName(folderName);
+    const custom = tsxCustomizations[id] || {};
     
     apps.push({
       id: `tsx-${id}`,
-      name,
-      description: `TSX project with multiple files`,
+      name: custom.name || name,
+      description: custom.description || `TSX project with multiple files`,
       type: 'tsx-project',
       path: path,
-      category: 'Other',
-      icon: getRandomIcon(name), // Auto-generate icon!
-      featured: false,
+      category: custom.category || 'Other',
+      icon: custom.icon || getRandomIcon(name), // Auto-generate icon!
+      featured: custom.featured || false,
+      addedAt: custom.addedAt,
       component: lazy(importFn),
     });
   });
@@ -128,16 +155,18 @@ const buildTsxApps = (): AppMeta[] => {
     
     const id = toKebabCase(folderName);
     const name = toReadableName(folderName);
+    const custom = tsxCustomizations[id] || {};
     
     apps.push({
       id: `tsx-${id}`,
-      name,
-      description: `TSX project with multiple files`,
+      name: custom.name || name,
+      description: custom.description || `TSX project with multiple files`,
       type: 'tsx-project',
       path: path,
-      category: 'Other',
-      icon: getRandomIcon(name), // Auto-generate icon!
-      featured: false,
+      category: custom.category || 'Other',
+      icon: custom.icon || getRandomIcon(name), // Auto-generate icon!
+      featured: custom.featured || false,
+      addedAt: custom.addedAt,
       component: lazy(importFn),
     });
   });
@@ -174,6 +203,7 @@ const buildHtmlApps = (): AppMeta[] => {
       category: custom.category || 'Other',
       icon: custom.icon || getIconByCategory(name, custom.category || 'Other'), // Auto-generate!
       featured: custom.featured || false,
+      addedAt: custom.addedAt,
     });
   });
   
@@ -194,6 +224,7 @@ const buildHtmlApps = (): AppMeta[] => {
       category: custom.category || 'Other',
       icon: custom.icon || getIconByCategory(name, custom.category || 'Other'), // Auto-generate!
       featured: custom.featured || false,
+      addedAt: custom.addedAt,
     });
   });
   
@@ -210,6 +241,7 @@ interface HtmlCustomization {
   category?: AppCategory;
   icon?: string;
   featured?: boolean;
+  addedAt?: string;
 }
 
 const htmlCustomizations: Record<string, HtmlCustomization> = {
@@ -220,6 +252,7 @@ const htmlCustomizations: Record<string, HtmlCustomization> = {
     category: 'Games',
     icon: '🤖',
     featured: true,
+    addedAt: '2025-09-18',
   },
   'tictactoe': {
     name: 'Tic Tac Toe',
@@ -248,6 +281,7 @@ const htmlCustomizations: Record<string, HtmlCustomization> = {
     description: 'Simple calculator for basic math operations',
     category: 'Tools',
     icon: '🧮',
+    addedAt: '2023-04-20',
   },
   'stopwatch': {
     name: 'Stopwatch',
@@ -274,6 +308,14 @@ const htmlCustomizations: Record<string, HtmlCustomization> = {
     description: 'Take quick notes with color coding',
     category: 'Productivity',
     icon: '📝',
+  },
+  'vibecode': {
+    name: 'VibeCode',
+    description: 'Interactive AI chat-style coding playground',
+    category: 'Tools',
+    icon: '🎛️',
+    featured: true,
+    addedAt: '2026-01-31',
   },
 };
 
@@ -336,6 +378,7 @@ export const loadTsxAppWithMeta = async (app: AppMeta): Promise<AppMeta> => {
         category: meta.category || app.category,
         icon: meta.icon || app.icon,
         featured: meta.featured ?? app.featured,
+        addedAt: meta.addedAt || app.addedAt,
         component: module.default,
       };
     }
@@ -384,6 +427,12 @@ export const getAppUrl = (app: AppMeta): string => {
     return `/apps/${app.id.replace('tsx-', '')}`;
   }
   return `/justhtml/${app.path}`;
+};
+
+export const getAppAddedAtTimestamp = (app: AppMeta): number | null => {
+  if (!app.addedAt) return null;
+  const timestamp = Date.parse(app.addedAt);
+  return Number.isNaN(timestamp) ? null : timestamp;
 };
 
 // Type helpers

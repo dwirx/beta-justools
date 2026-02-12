@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles, Atom, FileCode, Folder, ChevronRight, Star, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getAppRegistry, getAppCategories, AppCategory, AppMeta, getAppUrl, loadTsxAppWithMeta, getTypeLabel, isTsxApp, isProjectApp } from '@/lib/appRegistry';
+import { ArrowLeft, FolderOpen, Search, Gamepad2, Wrench, CheckSquare, BookOpen, Sparkles, Atom, FileCode, Folder, ChevronRight, Star, X, CalendarClock, ArrowUpDown, ListFilter } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { getAppRegistry, getAppCategories, AppCategory, AppMeta, getAppUrl, loadTsxAppWithMeta, getTypeLabel, isTsxApp, isProjectApp, getAppAddedAtTimestamp } from '@/lib/appRegistry';
 
 const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Games: <Gamepad2 className="w-4 h-4" />,
@@ -11,6 +11,20 @@ const categoryIcons: Record<AppCategory, React.ReactNode> = {
   Education: <BookOpen className="w-4 h-4" />,
   Entertainment: <Sparkles className="w-4 h-4" />,
   Other: <FolderOpen className="w-4 h-4" />,
+};
+
+type TypeFilter = 'All' | 'TSX' | 'HTML';
+type SortBy = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
+
+const formatAddedAt = (addedAt?: string) => {
+  if (!addedAt) return null;
+  const date = new Date(addedAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 
 const TypeBadge = ({ app }: { app: AppMeta }) => {
@@ -57,6 +71,12 @@ const AppCard = ({ app, index }: { app: AppMeta; index: number }) => {
         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
           {app.description}
         </p>
+        {formatAddedAt(app.addedAt) && (
+          <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5">
+            <CalendarClock className="w-3 h-3" />
+            <span>Ditambahkan {formatAddedAt(app.addedAt)}</span>
+          </p>
+        )}
         <div className="flex items-center gap-2 mt-2 sm:mt-3 flex-wrap">
           <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded-full text-muted-foreground flex items-center gap-1">
             {categoryIcons[app.category]}
@@ -95,6 +115,8 @@ const AppCard = ({ app, index }: { app: AppMeta; index: number }) => {
 
 const MyAppsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<'All' | AppCategory>('All');
+  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [apps, setApps] = useState<AppMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,14 +138,54 @@ const MyAppsPage = () => {
   }, []);
 
   const categories = getAppCategories();
-  
-  const filteredApps = apps.filter((app) => {
-    const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
-    const matchesSearch = 
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const typeFilteredApps = useMemo(() => {
+    if (selectedType === 'All') return apps;
+    if (selectedType === 'TSX') return apps.filter(isTsxApp);
+    return apps.filter((app) => !isTsxApp(app));
+  }, [apps, selectedType]);
+
+  const compareByDate = (a: AppMeta, b: AppMeta, newestFirst: boolean) => {
+    const aTimestamp = getAppAddedAtTimestamp(a);
+    const bTimestamp = getAppAddedAtTimestamp(b);
+
+    if (aTimestamp === null && bTimestamp === null) return a.name.localeCompare(b.name);
+    if (aTimestamp === null) return 1;
+    if (bTimestamp === null) return -1;
+    return newestFirst ? bTimestamp - aTimestamp : aTimestamp - bTimestamp;
+  };
+
+  const filteredApps = useMemo(() => {
+    const searched = typeFilteredApps.filter((app) => {
+      const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
+      const matchesSearch =
+        !normalizedQuery ||
+        app.name.toLowerCase().includes(normalizedQuery) ||
+        app.description.toLowerCase().includes(normalizedQuery) ||
+        app.category.toLowerCase().includes(normalizedQuery) ||
+        app.type.toLowerCase().includes(normalizedQuery);
+
+      return matchesCategory && matchesSearch;
+    });
+
+    return searched.sort((a, b) => {
+      if (sortBy === 'newest') return compareByDate(a, b, true);
+      if (sortBy === 'oldest') return compareByDate(a, b, false);
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+      return a.name.localeCompare(b.name);
+    });
+  }, [normalizedQuery, selectedCategory, sortBy, typeFilteredApps]);
+
+  const appsWithDate = useMemo(() => {
+    return apps
+      .map((app) => ({ app, timestamp: getAppAddedAtTimestamp(app) }))
+      .filter((item): item is { app: AppMeta; timestamp: number } => item.timestamp !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [apps]);
+
+  const oldestApp = appsWithDate[0]?.app;
+  const newestApp = appsWithDate[appsWithDate.length - 1]?.app;
 
   return (
     <div className="min-h-screen bg-background">
@@ -142,7 +204,7 @@ const MyAppsPage = () => {
               <h1 className="text-lg sm:text-xl font-bold text-foreground">My Apps</h1>
             </div>
             <span className="ml-auto text-xs sm:text-sm text-muted-foreground bg-muted/50 px-2 sm:px-3 py-1 rounded-full">
-              {loading ? '...' : `${apps.length} apps`}
+              {loading ? '...' : `${filteredApps.length}/${apps.length} apps`}
             </span>
           </div>
         </div>
@@ -169,6 +231,36 @@ const MyAppsPage = () => {
           )}
         </div>
 
+        {/* Sort and Type Filter */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          <div className="relative">
+            <ListFilter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <select
+              value={selectedType}
+              onChange={(event) => setSelectedType(event.target.value as TypeFilter)}
+              className="w-full pl-9 pr-3 py-2.5 bg-card border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="All">Semua tipe</option>
+              <option value="TSX">React / TSX</option>
+              <option value="HTML">HTML</option>
+            </select>
+          </div>
+
+          <div className="relative">
+            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as SortBy)}
+              className="w-full pl-9 pr-3 py-2.5 bg-card border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="newest">Urutkan: Terbaru</option>
+              <option value="oldest">Urutkan: Terlama</option>
+              <option value="name-asc">Urutkan: Nama A-Z</option>
+              <option value="name-desc">Urutkan: Nama Z-A</option>
+            </select>
+          </div>
+        </div>
+
         {/* Category Filter */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide snap-x snap-mandatory">
           <button
@@ -179,10 +271,10 @@ const MyAppsPage = () => {
                 : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
             }`}
           >
-            All ({apps.length})
+            All ({typeFilteredApps.length})
           </button>
           {categories.map((category) => {
-            const count = apps.filter(a => a.category === category).length;
+            const count = typeFilteredApps.filter(a => a.category === category).length;
             if (count === 0) return null;
             return (
               <button
@@ -202,6 +294,20 @@ const MyAppsPage = () => {
             );
           })}
         </div>
+
+        {appsWithDate.length > 0 && (
+          <div className="text-xs sm:text-sm bg-muted/40 border border-border rounded-xl px-3 py-2 text-muted-foreground">
+            Contoh:
+            {' '}
+            terbaru <span className="text-foreground font-medium">{newestApp?.name}</span>
+            {' '}
+            ({formatAddedAt(newestApp?.addedAt)})
+            {' '}
+            • terlama <span className="text-foreground font-medium">{oldestApp?.name}</span>
+            {' '}
+            ({formatAddedAt(oldestApp?.addedAt)})
+          </div>
+        )}
 
         {/* Info Banner */}
         <motion.div

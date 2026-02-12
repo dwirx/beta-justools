@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, memo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X, WifiOff, Globe, Wrench, Atom } from 'lucide-react';
+import { Search, X, WifiOff, Globe, Wrench, Atom, ArrowUpDown } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { UnifiedGrid } from '@/components/UnifiedGrid';
 import { GridSkeleton } from '@/components/Skeleton';
@@ -13,6 +13,8 @@ import {
   getStats,
   type SectionId,
 } from '@/lib/unifiedRegistry';
+
+type SortBy = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 // Storage keys for state persistence
 const STORAGE_KEYS = {
@@ -89,6 +91,7 @@ const Index = () => {
 
   const [activeTab, setActiveTabState] = useState<SectionId | 'all'>(initialTab);
   const [searchQuery, setSearchQuery] = useState(getSavedSearch());
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
 
   // Update tab and save to storage
   const setActiveTab = useCallback((tab: SectionId | 'all') => {
@@ -157,8 +160,47 @@ const Index = () => {
       );
     }
 
-    return items;
-  }, [activeTab, debouncedSearch]);
+    const getTimestamp = (addedAt?: string) => {
+      if (!addedAt) return null;
+      const timestamp = Date.parse(addedAt);
+      return Number.isNaN(timestamp) ? null : timestamp;
+    };
+
+    const compareByDate = (a: typeof items[number], b: typeof items[number], newestFirst: boolean) => {
+      const aTimestamp = getTimestamp(a.addedAt);
+      const bTimestamp = getTimestamp(b.addedAt);
+
+      if (aTimestamp === null && bTimestamp === null) return a.name.localeCompare(b.name);
+      if (aTimestamp === null) return 1;
+      if (bTimestamp === null) return -1;
+      return newestFirst ? bTimestamp - aTimestamp : aTimestamp - bTimestamp;
+    };
+
+    return items.sort((a, b) => {
+      if (sortBy === 'newest') return compareByDate(a, b, true);
+      if (sortBy === 'oldest') return compareByDate(a, b, false);
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+      return a.name.localeCompare(b.name);
+    });
+  }, [activeTab, debouncedSearch, sortBy]);
+
+  const dateRangeExample = useMemo(() => {
+    const withDate = filteredItems
+      .map((item) => ({ item, timestamp: item.addedAt ? Date.parse(item.addedAt) : NaN }))
+      .filter((entry): entry is { item: typeof filteredItems[number]; timestamp: number } => !Number.isNaN(entry.timestamp))
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (!withDate.length) return null;
+
+    const format = (date: string) =>
+      new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    return {
+      oldest: withDate[0].item,
+      newest: withDate[withDate.length - 1].item,
+      format,
+    };
+  }, [filteredItems]);
 
   const stats = getStats();
 
@@ -224,6 +266,33 @@ const Index = () => {
                 </button>
               );
             })}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_220px] gap-2">
+            {dateRangeExample ? (
+              <div className="text-[11px] sm:text-xs text-muted-foreground bg-secondary/40 border border-border/40 rounded-lg px-2.5 py-2">
+                Contoh: terbaru <span className="text-foreground font-medium">{dateRangeExample.newest.name}</span> ({dateRangeExample.format(dateRangeExample.newest.addedAt!)})
+                {' '}• terlama <span className="text-foreground font-medium">{dateRangeExample.oldest.name}</span> ({dateRangeExample.format(dateRangeExample.oldest.addedAt!)})
+              </div>
+            ) : (
+              <div className="text-[11px] sm:text-xs text-muted-foreground bg-secondary/40 border border-border/40 rounded-lg px-2.5 py-2">
+                Belum ada tanggal `addedAt` untuk item pada filter ini.
+              </div>
+            )}
+
+            <div className="relative">
+              <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value as SortBy)}
+                className="w-full bg-secondary/50 border border-border rounded-lg pl-8 pr-8 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 appearance-none"
+              >
+                <option value="newest">Urutkan: Terbaru</option>
+                <option value="oldest">Urutkan: Terlama</option>
+                <option value="name-asc">Urutkan: Nama A-Z</option>
+                <option value="name-desc">Urutkan: Nama Z-A</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

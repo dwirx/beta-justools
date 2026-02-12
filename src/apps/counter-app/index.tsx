@@ -10,6 +10,7 @@ export const appMeta = {
   category: 'Tools' as const,
   icon: '🔢',
   featured: true,
+  addedAt: '2025-12-02',
 };
 
 export default function CounterApp() {
