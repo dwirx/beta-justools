@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Penjumlahan</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .game {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(to top right, #ffffff, #e6f7ff);
+      border-radius: 12px;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+    }
+    .game h1 {
+      color: #0077B6;
+      font-size: 2.5rem;
+    }
+    .game p {
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+    input {
+      padding: 10px;
+      margin: 15px 0;
+      font-size: 1rem;
+      border: 2px solid #90e0ef;
+      border-radius: 5px;
+      width: 80%;
+    }
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      background: #0077B6;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #023e8a;
+    }
+    #result {
+      font-size: 1.2rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>Game Penjumlahan</h1>
+    <p><span id="num1"></span> + <span id="num2"></span> = ?</p>
+    <input type="number" id="answer" placeholder="Masukkan jawaban">
+    <button onclick="checkAnswer()">Submit</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const num1 = Math.floor(Math.random() * 50);
+    const num2 = Math.floor(Math.random() * 50);
+    document.getElementById('num1').textContent = num1;
+    document.getElementById('num2').textContent = num2;
+
+    function checkAnswer() {
+      const userAnswer = parseInt(document.getElementById('answer').value, 10);
+      const result = document.getElementById('result');
+      if (userAnswer === num1 + num2) {
+        result.textContent = 'Benar!';
+        result.style.color = 'green';
+      } else {
+        result.textContent = 'Salah, coba lagi.';
+        result.style.color = 'red';
+      }
+    }
+  </script>
+</body>
+</html>

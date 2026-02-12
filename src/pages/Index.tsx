@@ -176,7 +176,7 @@ const Index = () => {
       return newestFirst ? bTimestamp - aTimestamp : aTimestamp - bTimestamp;
     };
 
-    return items.sort((a, b) => {
+    return [...items].sort((a, b) => {
       if (sortBy === 'newest') return compareByDate(a, b, true);
       if (sortBy === 'oldest') return compareByDate(a, b, false);
       if (sortBy === 'name-desc') return b.name.localeCompare(a.name);

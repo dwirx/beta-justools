@@ -133,7 +133,7 @@ export function usePreloadImages(imageUrls: string[]) {
 // IDLE CALLBACK HOOK (Run when browser is idle)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useIdleCallback(callback: () => void, deps: any[] = []) {
+export function useIdleCallback(callback: () => void, deps: readonly unknown[] = []) {
   useEffect(() => {
     if ('requestIdleCallback' in window) {
       const id = requestIdleCallback(callback);
@@ -190,7 +190,15 @@ export function useNetworkStatus() {
     window.addEventListener('offline', handleOffline);
 
     // Check connection speed
-    const connection = (navigator as any).connection;
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          addEventListener: (type: 'change', listener: () => void) => void;
+          removeEventListener: (type: 'change', listener: () => void) => void;
+        };
+      }
+    ).connection;
     if (connection) {
       const checkSpeed = () => {
         setIsSlowConnection(
@@ -230,9 +238,9 @@ export function measurePerformance(name: string, fn: () => void) {
 // MEMOIZED CALLBACK WITH DEPS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useMemoizedCallback<T extends (...args: any[]) => any>(
+export function useMemoizedCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
-  deps: any[]
+  deps: readonly unknown[]
 ): T {
   const ref = useRef<T>(callback);
 

@@ -1,4 +1,4 @@
-import { Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType, lazy } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -99,15 +99,7 @@ const TsxAppWrapper = () => {
     return <AppNotFound appId={appId} />;
   }
 
-  // Lazy load the component
-  const LazyComponent = ({ importFn }: { importFn: () => Promise<{ default: ComponentType }> }) => {
-    const Component = require('react').lazy(importFn);
-    return (
-      <Suspense fallback={<AppLoading />}>
-        <Component />
-      </Suspense>
-    );
-  };
+  const LazyComponent = lazy(importFn);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -116,7 +108,9 @@ const TsxAppWrapper = () => {
       
       {/* App Content */}
       <div className="flex-1 relative">
-        <LazyComponent importFn={importFn} />
+        <Suspense fallback={<AppLoading />}>
+          <LazyComponent />
+        </Suspense>
       </div>
     </div>
   );

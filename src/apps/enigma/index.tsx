@@ -51,7 +51,7 @@ export default function EnigmaMachine() {
 
     let rotate1 = false;
     let rotate2 = false;
-    let rotate3 = true; 
+    const rotate3 = true; 
 
     if (r2.pos === notch2) {
       rotate1 = true;

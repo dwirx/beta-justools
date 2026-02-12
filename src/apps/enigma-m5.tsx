@@ -61,7 +61,7 @@ export default function EnigmaPro() {
 
     let turnLeft = false;
     let turnMid = false;
-    let turnRight = true; 
+    const turnRight = true; 
 
     if (rMid.pos === notchMid) {
       turnLeft = true;

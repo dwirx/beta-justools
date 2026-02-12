@@ -7,6 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Storage key for dismissal
 const INSTALL_DISMISSED_KEY = 'pwa_install_dismissed_until';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 /**
  * PWA Update Prompt Component
  * Menampilkan notifikasi saat ada update baru tersedia
@@ -14,7 +19,7 @@ const INSTALL_DISMISSED_KEY = 'pwa_install_dismissed_until';
  */
 export const PWAUpdatePrompt = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -47,7 +52,7 @@ export const PWAUpdatePrompt = () => {
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       
       // Only show if not dismissed for today
       if (shouldShowInstallPrompt()) {
