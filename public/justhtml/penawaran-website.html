@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Pembuatan Website - Kue Ku Bakery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Menggunakan font Google yang sangat mirip dengan font LaTeX (Computer Modern) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bakery: {
+                            500: '#ea580c', // Warna aksen minimal untuk link
+                        }
+                    },
+                    fontFamily: {
+                        'latex': ['"Crimson Pro"', '"Latin Modern Roman"', 'Georgia', 'serif'],
+                        'mono': ['"Courier New"', 'Courier', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #525659; /* Warna background PDF viewer */
+            color: #000000;
+        }
+        
+        /* Simulasi kertas A4 */
+        .a4-paper {
+            background-color: white;
+            max-width: 21cm; /* Lebar A4 */
+            min-height: 29.7cm; /* Tinggi A4 */
+            margin: 2rem auto;
+            padding: 2.5cm;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Memastikan teks sangat mudah di-select/copy */
+        * {
+            user-select: auto !important;
+        }
+
+        /* Format teks seperti LaTeX */
+        p {
+            text-align: justify;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        /* Tabel gaya Booktabs (LaTeX) */
+        .booktabs {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        .booktabs th, .booktabs td {
+            padding: 0.5rem 0.25rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        .booktabs th {
+            font-weight: 700;
+            border-top: 2px solid black;
+            border-bottom: 1px solid black;
+        }
+        .booktabs tbody tr:last-child td {
+            border-bottom: 2px solid black;
+        }
+        .booktabs .total-row td {
+            border-top: 1px solid black;
+            font-weight: 700;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+            }
+            .a4-paper {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                max-width: 100%;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="font-latex selection:bg-gray-300 selection:text-black antialiased text-[11pt]">
+
+    <!-- Toolbar Atas (Tidak ikut diprint) -->
+    <div class="no-print bg-gray-800 text-white p-4 text-center sticky top-0 z-10 shadow-md">
+        <span class="mr-4 text-sm font-sans">Tampilan ini didesain khusus agar mudah di-copy dan dicetak.</span>
+        <button onclick="window.print()" class="bg-white text-gray-800 px-4 py-1.5 rounded font-sans text-sm font-semibold hover:bg-gray-200 transition">
+            🖨️ Cetak / Simpan PDF
+        </button>
+    </div>
+
+    <!-- Kertas Dokumen -->
+    <div class="a4-paper relative">
+        
+        <!-- Header (Mewakili \maketitle di LaTeX) -->
+        <div class="text-center mb-10 border-b-2 border-black pb-6">
+            <h1 class="text-3xl font-bold mb-2 uppercase tracking-wide">Penawaran Pembuatan Website</h1>
+            <h2 class="text-2xl font-semibold mb-4">Kue Ku Bakery</h2>
+            <p class="text-lg">Domain: <span class="font-mono bg-gray-100 px-1">www.kuekubakery.com</span></p>
+        </div>
+
+        <!-- Section: Pengantar -->
+        <h3 class="text-xl font-bold mb-3 mt-8">Pengantar</h3>
+        <p>
+            Dokumen ini merangkum rincian estimasi anggaran belanja (RAB) untuk pembuatan website resmi <strong>Kue Ku Bakery</strong>. Anggaran ini telah disusun secara mendetail mencakup biaya jasa pengembangan, penyewaan <em>Cloud Hosting</em> berkecepatan tinggi, serta pendaftaran nama domain melalui DomaiNesia.
+        </p>
+
+        <!-- Blockquote/Box Info -->
+        <div class="border-l-4 border-gray-400 pl-4 py-1 my-4 bg-gray-50 italic text-gray-800">
+            <strong>Fleksibilitas Anggaran:</strong> Penawaran harga untuk jasa pembuatan website ini bersifat fleksibel dan <strong>masih dapat dinegosiasikan (bisa nego)</strong> agar dapat menyesuaikan dengan anggaran yang Anda miliki saat ini.
+        </div>
+
+        <!-- Section: Mengapa .COM -->
+        <h3 class="text-xl font-bold mb-3 mt-8">Pentingnya Domain .COM & Email Profesional</h3>
+        <p>
+            Pemilihan ekstensi domain <strong>.com</strong> bukanlah tanpa alasan. Ekstensi ini adalah standar emas di dunia maya yang akan memberikan dampak signifikan bagi bisnis Kue Ku Bakery:
+        </p>
+        <ul class="list-disc pl-6 mb-4 space-y-2 text-justify leading-relaxed">
+            <li>
+                <strong>Kredibilitas Tertinggi:</strong> Domain .com membuat toko Anda terlihat seperti bisnis yang mapan, terpercaya, dan profesional di mata pelanggan.
+            </li>
+            <li>
+                <strong>Email Bisnis Resmi (Sangat Penting):</strong> Dengan memiliki domain sendiri yang terhubung ke <em>Cloud Hosting</em>, Anda tidak lagi menggunakan email gratisan seperti <del>kuekubakery@gmail.com</del>. Anda bisa membuat dan menggunakan email profesional dengan nama bisnis Anda sendiri. Contoh:
+                <div class="my-2 block text-center">
+                    <span class="font-mono bg-gray-100 border border-gray-300 px-2 py-1 mx-2">admin@kuekubakery.com</span>
+                    <span class="font-mono bg-gray-100 border border-gray-300 px-2 py-1 mx-2">info@kuekubakery.com</span>
+                </div>
+                <span class="text-[10pt] text-gray-600 block mt-1 leading-snug">Email seperti ini sangat krusial jika Anda ingin bekerja sama dengan pemasok besar, pelanggan perusahaan (B2B), atau sekadar meningkatkan rasa aman dari pembeli.</span>
+            </li>
+            <li>
+                <strong>Mudah Diingat:</strong> Saat pelanggan mencari toko kue, otak mereka secara otomatis akan menambahkan ".com" di akhir pencarian.
+            </li>
+        </ul>
+
+        <!-- Section: Rincian Biaya -->
+        <h3 class="text-xl font-bold mb-3 mt-8">1. Rincian Anggaran Biaya</h3>
+
+        <h4 class="text-lg font-semibold mb-2 mt-4">1.1. Tahun Pertama (Biaya Setup & Rilis Awal)</h4>
+        <table class="booktabs">
+            <thead>
+                <tr>
+                    <th class="w-1/3">Deskripsi Layanan</th>
+                    <th class="w-1/2">Keterangan / Spesifikasi Detail</th>
+                    <th class="text-right whitespace-nowrap">Harga (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Jasa Pembuatan Website</strong></td>
+                    <td>Desain responsif, setup katalog produk, input menu kue, integrasi <em>Order via WhatsApp</em>.<br>
+                        <em>(*Harga masih bisa dinegosiasikan)</em>
+                    </td>
+                    <td class="text-right">1.000.000</td>
+                </tr>
+                <tr>
+                    <td><strong>Cloud Hosting (1 Tahun)</strong></td>
+                    <td>Kapasitas 2GB, server cloud performa tinggi, <em>uptime</em> 99.9%, gratis SSL, dan mendukung fitur Email Bisnis.</td>
+                    <td class="text-right">350.000</td>
+                </tr>
+                <tr>
+                    <td><strong>Domain .com</strong></td>
+                    <td>Nama domain <span class="font-mono">kuekubakery.com</span> (Harga Promo) beserta fasilitas <em>DNS Management</em>.<br>
+                        <a href="https://www.domainesia.com/pesan/?q=domain&domain=kuekubakery.com&siklus=1&dao%5B%5D=dnsmanagement" target="_blank" class="text-blue-700 underline text-[10pt]">Cek link pembelian domain di sini &rarr;</a>
+                    </td>
+                    <td class="text-right">177.489</td>
+                </tr>
+                <tr class="total-row bg-gray-100">
+                    <td colspan="2" class="text-right">Total Biaya Tahun Pertama</td>
+                    <td class="text-right">1.527.489</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4 class="text-lg font-semibold mb-2 mt-6">1.2. Tahun Kedua & Seterusnya (Biaya Perpanjangan)</h4>
+        <p class="text-[10pt] text-gray-700 mb-2">Setelah satu tahun berjalan, Anda hanya membayar biaya sewa server dan nama domain agar website tetap aktif. Jasa pembuatan tidak ditagihkan lagi.</p>
+        <table class="booktabs">
+            <thead>
+                <tr>
+                    <th class="w-1/3">Deskripsi Layanan</th>
+                    <th class="w-1/2">Keterangan / Spesifikasi Detail</th>
+                    <th class="text-right whitespace-nowrap">Harga (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Perpanjangan Hosting</strong></td>
+                    <td>Biaya sewa server tahunan untuk website dan penyimpanan email profesional.</td>
+                    <td class="text-right">350.000</td>
+                </tr>
+                <tr>
+                    <td><strong>Perpanjangan Domain</strong></td>
+                    <td>Biaya perpanjangan tahunan nama domain (Harga Normal DomaiNesia).</td>
+                    <td class="text-right">252.900</td>
+                </tr>
+                <tr class="total-row bg-gray-100">
+                    <td colspan="2" class="text-right">Total Perpanjangan (Per Tahun)</td>
+                    <td class="text-right">602.900</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section: Fitur -->
+        <h3 class="text-xl font-bold mb-3 mt-8">2. Fitur Utama yang Didapatkan</h3>
+        <ul class="list-disc pl-6 space-y-2 text-justify leading-relaxed">
+            <li><strong>Desain Responsif (Mobile-Friendly):</strong> Tampilan website otomatis rapi saat dibuka di HP, tablet, maupun Laptop/PC desktop.</li>
+            <li><strong>Katalog & Menu Interaktif:</strong> Menampilkan foto kue, deskripsi, dan daftar harga dengan menarik.</li>
+            <li><strong>Order Langsung ke WhatsApp:</strong> Tombol pesan yang langsung membuka chat WA admin dengan format pesanan otomatis.</li>
+            <li><strong>Sistem Keamanan SSL:</strong> Website aman dari peretasan (HTTPS) sehingga kredibilitas di mesin pencari meningkat.</li>
+        </ul>
+
+        <!-- Footer Note -->
+        <div class="mt-16 pt-4 border-t border-black text-center text-[10pt] text-gray-600 italic">
+            *Catatan: Estimasi harga domain didasarkan pada harga DomaiNesia saat dokumen ini dibuat. Harga jasa pembuatan web adalah estimasi dan dapat disesuaikan kembali sesuai kesepakatan bersama.
+        </div>
+
+    </div>
+
+</body>
+</html>
