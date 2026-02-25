@@ -6,7 +6,7 @@
     <title>Proposal Pembuatan Website - Kue Ku Bakery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Menggunakan font Google yang sangat mirip dengan font LaTeX (Computer Modern) -->
+    <!-- Font Google yang sangat mirip dengan font LaTeX (Computer Modern) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
@@ -17,11 +17,12 @@
                 extend: {
                     colors: {
                         bakery: {
-                            500: '#ea580c', // Warna aksen minimal untuk link
+                            500: '#ea580c',
                         }
                     },
                     fontFamily: {
                         'latex': ['"Crimson Pro"', '"Latin Modern Roman"', 'Georgia', 'serif'],
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
                         'mono': ['"Courier New"', 'Courier', 'monospace'],
                     }
                 }
@@ -30,18 +31,19 @@
     </script>
     <style>
         body {
-            background-color: #525659; /* Warna background PDF viewer */
+            background-color: #323639; /* Warna background gelap ala Chrome PDF Viewer */
             color: #000000;
         }
         
         /* Simulasi kertas A4 */
         .a4-paper {
             background-color: white;
-            max-width: 21cm; /* Lebar A4 */
-            min-height: 29.7cm; /* Tinggi A4 */
-            margin: 2rem auto;
+            max-width: 21cm; /* Lebar standar A4 */
+            min-height: 29.7cm; /* Tinggi standar A4 */
+            margin: 2.5rem auto;
             padding: 2.5cm;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3), 0 0 40px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         /* Memastikan teks sangat mudah di-select/copy */
@@ -64,7 +66,7 @@
             margin-bottom: 2rem;
         }
         .booktabs th, .booktabs td {
-            padding: 0.5rem 0.25rem;
+            padding: 0.6rem 0.4rem;
             text-align: left;
             vertical-align: top;
         }
@@ -81,41 +83,79 @@
             font-weight: 700;
         }
 
+        /* Styling khusus saat proses Print/Save to PDF */
         @media print {
+            @page {
+                size: A4;
+                margin: 0; /* Margin diatur dari padding container */
+            }
             body {
                 background-color: white;
+                margin: 0;
+                padding: 0;
             }
             .a4-paper {
                 margin: 0;
-                padding: 0;
+                padding: 2cm 2.5cm; /* Padding disesuaikan untuk print aktual */
                 box-shadow: none;
                 max-width: 100%;
                 width: 100%;
+                min-height: auto;
             }
             .no-print {
-                display: none;
+                display: none !important;
+            }
+            /* Memaksa browser mencetak warna background (penting untuk tabel dan kotak info) */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            /* Mencegah link menampilkan URL panjang di sebelahnya saat diprint */
+            a[href]:after {
+                content: none !important;
             }
         }
     </style>
 </head>
-<body class="font-latex selection:bg-gray-300 selection:text-black antialiased text-[11pt]">
+<body class="font-latex selection:bg-blue-200 selection:text-black antialiased text-[11pt]">
 
-    <!-- Toolbar Atas (Tidak ikut diprint) -->
-    <div class="no-print bg-gray-800 text-white p-4 text-center sticky top-0 z-10 shadow-md">
-        <span class="mr-4 text-sm font-sans">Tampilan ini didesain khusus agar mudah di-copy dan dicetak.</span>
-        <button onclick="window.print()" class="bg-white text-gray-800 px-4 py-1.5 rounded font-sans text-sm font-semibold hover:bg-gray-200 transition">
-            🖨️ Cetak / Simpan PDF
-        </button>
+    <!-- Toolbar Atas ala PDF Viewer (Tidak ikut diprint) -->
+    <div class="no-print bg-[#323639] border-b border-gray-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <!-- Sisi Kiri: Nama File -->
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="font-sans text-sm font-medium tracking-wide">Proposal_Website_KueKuBakery.pdf</span>
+            </div>
+            
+            <!-- Sisi Tengah: Info -->
+            <div class="hidden md:block text-gray-400 font-sans text-xs">
+                Format dokumen A4 - Siap Cetak
+            </div>
+
+            <!-- Sisi Kanan: Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded flex items-center transition duration-200 shadow font-sans text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Cetak / Simpan PDF
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Kertas Dokumen -->
-    <div class="a4-paper relative">
+    <div class="a4-paper">
         
         <!-- Header (Mewakili \maketitle di LaTeX) -->
         <div class="text-center mb-10 border-b-2 border-black pb-6">
             <h1 class="text-3xl font-bold mb-2 uppercase tracking-wide">Penawaran Pembuatan Website</h1>
             <h2 class="text-2xl font-semibold mb-4">Kue Ku Bakery</h2>
-            <p class="text-lg">Domain: <span class="font-mono bg-gray-100 px-1">www.kuekubakery.com</span></p>
+            <p class="text-lg">Domain: <span class="font-mono bg-gray-100 px-1 border border-gray-300">www.kuekubakery.com</span></p>
         </div>
 
         <!-- Section: Pengantar -->
@@ -125,7 +165,7 @@
         </p>
 
         <!-- Blockquote/Box Info -->
-        <div class="border-l-4 border-gray-400 pl-4 py-1 my-4 bg-gray-50 italic text-gray-800">
+        <div class="border-l-4 border-blue-500 pl-4 py-2 my-5 bg-blue-50 text-gray-800">
             <strong>Fleksibilitas Anggaran:</strong> Penawaran harga untuk jasa pembuatan website ini bersifat fleksibel dan <strong>masih dapat dinegosiasikan (bisa nego)</strong> agar dapat menyesuaikan dengan anggaran yang Anda miliki saat ini.
         </div>
 
@@ -134,17 +174,17 @@
         <p>
             Pemilihan ekstensi domain <strong>.com</strong> bukanlah tanpa alasan. Ekstensi ini adalah standar emas di dunia maya yang akan memberikan dampak signifikan bagi bisnis Kue Ku Bakery:
         </p>
-        <ul class="list-disc pl-6 mb-4 space-y-2 text-justify leading-relaxed">
+        <ul class="list-disc pl-6 mb-4 space-y-3 text-justify leading-relaxed">
             <li>
                 <strong>Kredibilitas Tertinggi:</strong> Domain .com membuat toko Anda terlihat seperti bisnis yang mapan, terpercaya, dan profesional di mata pelanggan.
             </li>
             <li>
-                <strong>Email Bisnis Resmi (Sangat Penting):</strong> Dengan memiliki domain sendiri yang terhubung ke <em>Cloud Hosting</em>, Anda tidak lagi menggunakan email gratisan seperti <del>kuekubakery@gmail.com</del>. Anda bisa membuat dan menggunakan email profesional dengan nama bisnis Anda sendiri. Contoh:
-                <div class="my-2 block text-center">
-                    <span class="font-mono bg-gray-100 border border-gray-300 px-2 py-1 mx-2">admin@kuekubakery.com</span>
-                    <span class="font-mono bg-gray-100 border border-gray-300 px-2 py-1 mx-2">info@kuekubakery.com</span>
+                <strong>Email Bisnis Resmi (Sangat Penting):</strong> Dengan memiliki domain sendiri yang terhubung ke <em>Cloud Hosting</em>, Anda tidak lagi menggunakan email gratisan seperti <del class="text-gray-500">kuekubakery@gmail.com</del>. Anda bisa membuat dan menggunakan email profesional dengan nama bisnis Anda sendiri. Contoh:
+                <div class="my-3 block text-center">
+                    <span class="font-mono bg-gray-100 border border-gray-300 px-3 py-1.5 mx-2 rounded-sm shadow-sm">admin@kuekubakery.com</span>
+                    <span class="font-mono bg-gray-100 border border-gray-300 px-3 py-1.5 mx-2 rounded-sm shadow-sm">info@kuekubakery.com</span>
                 </div>
-                <span class="text-[10pt] text-gray-600 block mt-1 leading-snug">Email seperti ini sangat krusial jika Anda ingin bekerja sama dengan pemasok besar, pelanggan perusahaan (B2B), atau sekadar meningkatkan rasa aman dari pembeli.</span>
+                <span class="text-[10pt] text-gray-600 block mt-2 leading-snug">Email seperti ini sangat krusial jika Anda ingin bekerja sama dengan pemasok besar, pelanggan perusahaan (B2B), atau sekadar meningkatkan rasa aman dari pembeli.</span>
             </li>
             <li>
                 <strong>Mudah Diingat:</strong> Saat pelanggan mencari toko kue, otak mereka secara otomatis akan menambahkan ".com" di akhir pencarian.
@@ -152,7 +192,7 @@
         </ul>
 
         <!-- Section: Rincian Biaya -->
-        <h3 class="text-xl font-bold mb-3 mt-8">1. Rincian Anggaran Biaya</h3>
+        <h3 class="text-xl font-bold mb-3 mt-10">1. Rincian Anggaran Biaya</h3>
 
         <h4 class="text-lg font-semibold mb-2 mt-4">1.1. Tahun Pertama (Biaya Setup & Rilis Awal)</h4>
         <table class="booktabs">
@@ -167,7 +207,7 @@
                 <tr>
                     <td><strong>Jasa Pembuatan Website</strong></td>
                     <td>Desain responsif, setup katalog produk, input menu kue, integrasi <em>Order via WhatsApp</em>.<br>
-                        <em>(*Harga masih bisa dinegosiasikan)</em>
+                        <span class="text-[10pt] italic text-gray-700">(*Harga masih bisa dinegosiasikan)</span>
                     </td>
                     <td class="text-right">1.000.000</td>
                 </tr>
@@ -178,20 +218,20 @@
                 </tr>
                 <tr>
                     <td><strong>Domain .com</strong></td>
-                    <td>Nama domain <span class="font-mono">kuekubakery.com</span> (Harga Promo) beserta fasilitas <em>DNS Management</em>.<br>
+                    <td>Nama domain <span class="font-mono bg-gray-100 px-1">kuekubakery.com</span> (Harga Promo) beserta fasilitas <em>DNS Management</em>.<br>
                         <a href="https://www.domainesia.com/pesan/?q=domain&domain=kuekubakery.com&siklus=1&dao%5B%5D=dnsmanagement" target="_blank" class="text-blue-700 underline text-[10pt]">Cek link pembelian domain di sini &rarr;</a>
                     </td>
                     <td class="text-right">177.489</td>
                 </tr>
                 <tr class="total-row bg-gray-100">
                     <td colspan="2" class="text-right">Total Biaya Tahun Pertama</td>
-                    <td class="text-right">1.527.489</td>
+                    <td class="text-right text-lg">1.527.489</td>
                 </tr>
             </tbody>
         </table>
 
-        <h4 class="text-lg font-semibold mb-2 mt-6">1.2. Tahun Kedua & Seterusnya (Biaya Perpanjangan)</h4>
-        <p class="text-[10pt] text-gray-700 mb-2">Setelah satu tahun berjalan, Anda hanya membayar biaya sewa server dan nama domain agar website tetap aktif. Jasa pembuatan tidak ditagihkan lagi.</p>
+        <h4 class="text-lg font-semibold mb-2 mt-8">1.2. Tahun Kedua & Seterusnya (Biaya Perpanjangan)</h4>
+        <p class="text-[10pt] text-gray-700 mb-2">Setelah satu tahun berjalan, Anda hanya membayar biaya sewa server dan perpanjangan nama domain agar website tetap aktif. Jasa pembuatan tidak ditagihkan lagi.</p>
         <table class="booktabs">
             <thead>
                 <tr>
@@ -213,13 +253,13 @@
                 </tr>
                 <tr class="total-row bg-gray-100">
                     <td colspan="2" class="text-right">Total Perpanjangan (Per Tahun)</td>
-                    <td class="text-right">602.900</td>
+                    <td class="text-right text-lg">602.900</td>
                 </tr>
             </tbody>
         </table>
 
         <!-- Section: Fitur -->
-        <h3 class="text-xl font-bold mb-3 mt-8">2. Fitur Utama yang Didapatkan</h3>
+        <h3 class="text-xl font-bold mb-3 mt-10">2. Fitur Utama yang Didapatkan</h3>
         <ul class="list-disc pl-6 space-y-2 text-justify leading-relaxed">
             <li><strong>Desain Responsif (Mobile-Friendly):</strong> Tampilan website otomatis rapi saat dibuka di HP, tablet, maupun Laptop/PC desktop.</li>
             <li><strong>Katalog & Menu Interaktif:</strong> Menampilkan foto kue, deskripsi, dan daftar harga dengan menarik.</li>
@@ -228,7 +268,7 @@
         </ul>
 
         <!-- Footer Note -->
-        <div class="mt-16 pt-4 border-t border-black text-center text-[10pt] text-gray-600 italic">
+        <div class="mt-16 pt-4 border-t-2 border-black text-center text-[10pt] text-gray-600 italic">
             *Catatan: Estimasi harga domain didasarkan pada harga DomaiNesia saat dokumen ini dibuat. Harga jasa pembuatan web adalah estimasi dan dapat disesuaikan kembali sesuai kesepakatan bersama.
         </div>
 
